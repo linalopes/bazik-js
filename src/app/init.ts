@@ -1,0 +1,68 @@
+import { initMainCanvas } from '../graphics/context';
+import { render } from '../graphics/render';
+import { buildPresetBank } from '../ui/presetBank';
+import { buildFxStrip, updateFxSlot } from '../ui/fxStrip';
+import {
+  selectPreset,
+  selectColorBank,
+  setMode,
+  setPar1Value,
+  setPar2Value,
+  setSpeedValue,
+  setExplodeValue,
+} from '../input/actions';
+import { setupXYPad } from '../input/xyPad';
+import { makeKnob, updateKnob } from '../input/knobs';
+import { registerKeyboard } from '../input/keyboard';
+import { initializeControllerLearnMode } from '../input/controllerLearn';
+import { getSavedSchemaVersion, loadStateFromStorage } from '../persistence/storage';
+import { S, writeFxAt } from '../core/state';
+import { getPresetIndexById, initializePresetRegistry, refreshPresetList } from '../presets/list';
+
+export async function init(): Promise<void> {
+  const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
+  if (!canvas) return;
+  initMainCanvas(canvas);
+
+  await initializePresetRegistry();
+  refreshPresetList();
+  buildPresetBank(selectPreset);
+  buildFxStrip();
+  selectColorBank(0);
+  setupXYPad();
+
+  (['speed', 'explode'] as const).forEach((p) => {
+    const el = document.getElementById('knob-' + p);
+    if (!el) return;
+    const ind = document.createElement('div');
+    ind.className = 'knob-indicator';
+    ind.id = 'ind-' + p;
+    el.appendChild(ind);
+    makeKnob('knob-' + p, p);
+    updateKnob(p, S[p]);
+  });
+
+  const saved = loadStateFromStorage();
+  if (saved) {
+    const schemaVersion = getSavedSchemaVersion(saved);
+    // Migration hook: branch by schemaVersion when payload upgrades require transforms.
+    void schemaVersion;
+    // Build phase: do not restore preset/mode from storage (deterministic bars + mode 1 below).
+    if (saved.par1) setPar1Value(saved.par1);
+    if (saved.par2) setPar2Value(saved.par2);
+    if (saved.speed) setSpeedValue(saved.speed);
+    if (saved.explode) setExplodeValue(saved.explode);
+    if (saved.fx) saved.fx.forEach((v, i) => {
+      writeFxAt(i, v!);
+      updateFxSlot(i);
+    });
+  }
+
+  const barsIdx = getPresetIndexById('bars');
+  selectPreset(barsIdx >= 0 ? barsIdx : 0);
+  setMode(1);
+
+  registerKeyboard();
+  initializeControllerLearnMode();
+  render();
+}

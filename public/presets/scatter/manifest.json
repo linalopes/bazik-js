@@ -1,0 +1,12 @@
+{
+  "id": "scatter",
+  "name": "scatter",
+  "modes": { "min": 1, "max": 8 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#CAD8D8", "#EA7DFF", "#08F2DB", "#22113E"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#CAD8D8", "#EA7DFF", "#08F2DB"]
+  }
+}

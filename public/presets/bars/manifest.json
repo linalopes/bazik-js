@@ -1,0 +1,12 @@
+{
+  "id": "bars",
+  "name": "bars",
+  "modes": { "min": 1, "max": 4 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#FFFFFF", "#FFD84D", "#C93CFF", "#050210"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#FFFFFF", "#FFD84D", "#C93CFF"]
+  }
+}

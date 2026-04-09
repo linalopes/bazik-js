@@ -1,0 +1,12 @@
+{
+  "id": "pulse",
+  "name": "pulse",
+  "modes": { "min": 1, "max": 8 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#22113E", "#CAD8D8", "#08F2DB", "#EA7DFF"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#CAD8D8", "#22113E", "#EA7DFF"]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "lattice",
+  "name": "lattice",
+  "modes": { "min": 1, "max": 8 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#EA7DFF", "#08F2DB", "#FFFFFF", "#22113E"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#EA7DFF", "#08F2DB", "#CAD8D8"]
+  }
+}

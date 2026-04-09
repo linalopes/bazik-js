@@ -1,0 +1,12 @@
+{
+  "id": "triangle",
+  "name": "triangle",
+  "modes": { "min": 1, "max": 4 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#7FF4FF", "#FF56C8", "#FFE04D", "#FFFFFF"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#08F2DB", "#EA7DFF", "#CAD8D8"]
+  }
+}

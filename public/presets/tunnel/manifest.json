@@ -1,0 +1,12 @@
+{
+  "id": "tunnel",
+  "name": "tunnel",
+  "modes": { "min": 1, "max": 4 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#34E8D4", "#3D1F5C", "#E070FF", "#06040C"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#34E8D4", "#E070FF", "#3D1F5C"]
+  }
+}

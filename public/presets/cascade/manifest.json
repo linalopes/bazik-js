@@ -1,0 +1,12 @@
+{
+  "id": "cascade",
+  "name": "cascade",
+  "modes": { "min": 1, "max": 8 },
+  "paramLabels": ["par 1", "par 2"],
+  "defaultParams": { "par1": 0, "par2": 0 },
+  "defaultColors": ["#08F2DB", "#FFFFFF", "#EA7DFF", "#22113E"],
+  "thumbnail": {
+    "kind": "generated",
+    "palette": ["#08F2DB", "#EA7DFF", "#CAD8D8"]
+  }
+}
