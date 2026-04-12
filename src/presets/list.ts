@@ -1,5 +1,5 @@
 /**
- * Back-compat preset list for MainPass, actions, status line, and preset bank.
+ * Preset draw list for `Renderer`, actions, status line, and preset bank.
  * Prefer `PresetManager` / manifests when adding metadata-driven behavior.
  */
 import type { PresetDrawFn } from '../graphics/presetDraws';

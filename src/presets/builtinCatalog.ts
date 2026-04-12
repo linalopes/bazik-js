@@ -1,30 +1,18 @@
 /**
- * Built-in preset draw registry and fallback manifests.
- * Runtime manifests are now loaded from `public/presets/<id>/manifest.json`.
+ * Built-in preset registry and fallback manifests.
+ * Runtime manifests load from `public/presets/<id>/manifest.json`.
+ * All slots share the same shell preview draw (no per-preset GPU renderer).
  */
 import type { PresetManifest } from './manifestTypes';
 import type { PresetDrawFn } from '../graphics/presetDraws';
 import { COLOR_BANKS, PALETTES } from './constants';
-import {
-  drawScatter,
-  drawCrystal,
-  drawOrbs,
-  drawLattice,
-  drawPulse,
-  drawBarsWebGL,
-  drawTriangleWebGL,
-  drawTunnelWebGL,
-} from '../graphics/presetDraws';
+import { drawPreviewPlaceholder } from '../graphics/presetDraws';
 
 export interface PresetEntry {
   readonly manifest: PresetManifest;
   readonly draw: PresetDrawFn;
 }
 
-/**
- * Fixed 8-slot visible bank: WebGL presets first (`bars`, `triangle`, `tunnel`), then Canvas presets.
- * `drawCascade` / `drawGlitch` stay in `presetDraws.ts` for reuse but are not registered here.
- */
 export const BUILTIN_PRESET_IDS = [
   'bars',
   'triangle',
@@ -36,18 +24,10 @@ export const BUILTIN_PRESET_IDS = [
   'pulse',
 ] as const;
 
-const DRAWS_BY_ORDER: PresetDrawFn[] = [
-  drawBarsWebGL,
-  drawTriangleWebGL,
-  drawTunnelWebGL,
-  drawScatter,
-  drawCrystal,
-  drawOrbs,
-  drawLattice,
-  drawPulse,
-];
+const shellDraw: PresetDrawFn = drawPreviewPlaceholder;
 
-/** Palette row in `constants.ts` per Canvas slot; `bars` is custom; `triangle` reuses former cascade row (6). */
+const DRAWS_BY_ORDER: PresetDrawFn[] = BUILTIN_PRESET_IDS.map(() => shellDraw);
+
 const FALLBACK_MANIFEST_ROW: Record<(typeof BUILTIN_PRESET_IDS)[number], number | null> = {
   bars: null,
   scatter: 0,
@@ -60,14 +40,14 @@ const FALLBACK_MANIFEST_ROW: Record<(typeof BUILTIN_PRESET_IDS)[number], number 
 };
 
 export const DRAW_REGISTRY: Readonly<Record<(typeof BUILTIN_PRESET_IDS)[number], PresetDrawFn>> = {
-  scatter: drawScatter,
-  crystal: drawCrystal,
-  tunnel: drawTunnelWebGL,
-  orbs: drawOrbs,
-  lattice: drawLattice,
-  pulse: drawPulse,
-  bars: drawBarsWebGL,
-  triangle: drawTriangleWebGL,
+  scatter: shellDraw,
+  crystal: shellDraw,
+  tunnel: shellDraw,
+  orbs: shellDraw,
+  lattice: shellDraw,
+  pulse: shellDraw,
+  bars: shellDraw,
+  triangle: shellDraw,
 };
 
 function barsFallbackManifest(): PresetManifest {

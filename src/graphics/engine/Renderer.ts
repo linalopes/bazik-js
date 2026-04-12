@@ -1,23 +1,16 @@
 /**
- * Canvas 2D frame orchestration — no audio, DOM, or app auto-mode logic.
- * Call from {@link ../render.ts} after upstream systems (e.g. audio analysis) have run.
+ * Shell frame: sync 2D canvas size, run the shared preview draw for the selected bank slot.
  */
-import * as MainPass from './MainPass';
-import { runPostFxPipeline } from './FXPipeline';
+import { syncMainCanvasSize } from '../context';
+import { PRESETS } from '../../presets/list';
 import type { RenderSnapshot } from './renderSnapshot';
 
-export type CanvasFramePhase = 'fadeEarlyExit' | 'complete';
+export type FramePhase = 'complete';
 
-export function renderCanvas2DFrame(snapshot: RenderSnapshot): CanvasFramePhase {
-  MainPass.drawEchoBackground(snapshot);
-  MainPass.applyLoufiPixelate(snapshot);
-  MainPass.resetAlphaBeforeFade();
-  if (MainPass.applyFadeOverlay(snapshot)) {
-    return 'fadeEarlyExit';
-  }
-
-  const t = MainPass.computeSceneTime(snapshot);
-  MainPass.drawCurrentPreset(t, snapshot);
-  runPostFxPipeline(snapshot);
+export function renderFrame(snapshot: RenderSnapshot): FramePhase {
+  syncMainCanvasSize();
+  /* speed −100..+100; 0 → same time scale as legacy mid-knob (50/50 = 1). */
+  const t = snapshot.frame * 0.018 * (1 + snapshot.speed / 100);
+  PRESETS[snapshot.currentPreset]?.draw(t, snapshot);
   return 'complete';
 }

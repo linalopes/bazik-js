@@ -1,47 +1,33 @@
 import { S, adjustFxAt, writeFxAt } from '../core/state';
 import { FX_NAMES, isFxControlActive } from '../fx/FXManager';
 
-/** Arm state for FX strip (WebGL preset pipeline reads this for echo/zoom, etc.). */
+/** Effect enabled (on/off). Independent of stored bipolar value in `S.fx`. */
 export function isFxArmed(slotIndex: number): boolean {
   return fxArmed[slotIndex] === true;
 }
 
 const fxArmed: boolean[] = [];
-const fxLastNonZeroAmount: number[] = [];
-const DEFAULT_RESTORE_AMOUNT = 40;
-
-function isBipolarFxSlot(i: number): boolean {
-  const n = FX_NAMES[i];
-  return n === 'echo' || n === 'zoom';
-}
 
 export function updateFxSlot(i: number): void {
   const amount = S.fx[i] ?? 0;
-  const bipolar = isBipolarFxSlot(i);
-  if (!bipolar && amount > 0) {
-    fxArmed[i] = true;
-    fxLastNonZeroAmount[i] = amount;
-  } else if (bipolar && amount !== 0) {
-    fxLastNonZeroAmount[i] = amount;
-  } else if (fxArmed[i] === undefined) {
+  if (fxArmed[i] === undefined) {
     fxArmed[i] = false;
   }
   const valEl = document.getElementById('fxval-' + i);
   if (valEl) valEl.textContent = String(amount);
   const ind = document.getElementById('fxind-' + i);
   if (ind) {
-    const deg = bipolar ? (amount / 100) * 140 : -140 + (amount / 100) * 280;
+    const deg = (amount / 100) * 140;
     ind.style.transform = `translateX(-50%) rotate(${deg}deg)`;
   }
   const slot = document.getElementById('fx-slot-' + i);
   const armed = fxArmed[i] === true;
-  const active = armed && (bipolar ? true : isFxControlActive(i, amount));
+  const active = armed && isFxControlActive(i, amount);
   if (slot) slot.classList.toggle('fx-active', active);
   if (slot) slot.classList.toggle('fx-armed', armed);
   if (slot) slot.classList.toggle('fx-unarmed', !armed);
   const knob = document.getElementById('fxknob-' + i);
   if (knob) knob.classList.toggle('active-knob', armed);
-  if (knob) knob.classList.toggle('disabled-knob', !armed);
   const armBtn = document.getElementById('fxarm-' + i);
   if (armBtn) {
     armBtn.textContent = armed ? 'on' : 'off';
@@ -63,19 +49,10 @@ function makeFxKnob(i: number): void {
     e.preventDefault();
     startY = e.clientY;
     startVal = S.fx[i]!;
-    const bipolar = isBipolarFxSlot(i);
     const onMove = (ev: MouseEvent) => {
-      const delta = Math.round((startY - ev.clientY) * 0.7);
-      const nv = bipolar
-        ? Math.max(-100, Math.min(100, startVal + delta))
-        : Math.max(0, Math.min(100, startVal + delta));
+      const delta = Math.round((startY - ev.clientY) * 0.8);
+      const nv = Math.max(-100, Math.min(100, Math.round(startVal + delta)));
       writeFxAt(i, nv);
-      if (!bipolar) {
-        fxArmed[i] = nv > 0;
-        if (nv > 0) fxLastNonZeroAmount[i] = nv;
-      } else if (nv !== 0) {
-        fxLastNonZeroAmount[i] = nv;
-      }
       updateFxSlot(i);
     };
     const onUp = () => {
@@ -88,21 +65,7 @@ function makeFxKnob(i: number): void {
 }
 
 function toggleFxArm(i: number): void {
-  const bipolar = isBipolarFxSlot(i);
-  const armed = fxArmed[i] === true;
-  if (armed) {
-    if (bipolar) {
-      if (S.fx[i] !== 0) fxLastNonZeroAmount[i] = S.fx[i]!;
-    } else {
-      fxLastNonZeroAmount[i] = Math.max(1, S.fx[i] ?? fxLastNonZeroAmount[i] ?? DEFAULT_RESTORE_AMOUNT);
-    }
-    writeFxAt(i, 0);
-    fxArmed[i] = false;
-  } else {
-    const restore = fxLastNonZeroAmount[i] ?? DEFAULT_RESTORE_AMOUNT;
-    writeFxAt(i, restore);
-    fxArmed[i] = true;
-  }
+  fxArmed[i] = !fxArmed[i];
   updateFxSlot(i);
 }
 
@@ -121,7 +84,7 @@ export function buildFxStrip(): void {
     slot.id = 'fx-slot-' + i;
     slot.innerHTML = `
       <div class="fx-knob" id="fxknob-${i}">
-        <div class="fx-knob-indicator" id="fxind-${i}" style="transform:translateX(-50%) rotate(-140deg)"></div>
+        <div class="fx-knob-indicator" id="fxind-${i}" style="transform:translateX(-50%) rotate(0deg)"></div>
       </div>
       <div class="fx-par-row">
         <button class="fx-par-btn" type="button" data-fx-dec="${i}">−</button>

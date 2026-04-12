@@ -33,7 +33,7 @@ export function createDefaultBindings(): Record<string, SemanticBinding> {
     'controller.button7': { onDown: () => actions.exportFrame() },
     'controller.button8': { onDown: () => actions.saveStateSilent() },
     'controller.button9': { onDown: () => actions.cloneState() },
-    'controller.button10': { onDown: () => actions.toggleMidiLearn() },
+    'controller.button10': { onDown: () => actions.toggleControllerLearn() },
     'controller.button11': { onDown: () => actions.toggleFxPanel() },
     'controller.button12': { onDown: () => actions.resetPars() },
 
@@ -51,7 +51,7 @@ export function createDefaultBindings(): Record<string, SemanticBinding> {
 
     'controller.knob4.decrement': { onDown: () => actions.adjustPar('par2', -STEP_PAR) },
     'controller.knob4.increment': { onDown: () => actions.adjustPar('par2', STEP_PAR) },
-    'controller.knob4.press': { onDown: () => actions.triggerBlackout() },
+    'controller.knob4.press': { onDown: () => actions.resetScreenBlend() },
   };
 }
 

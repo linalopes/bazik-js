@@ -1,12 +1,7 @@
 import type { AudioFeatures } from './types';
 
-/** Mic button adapter: keeps DOM details out of audio input logic. */
-export function setMicButtonState(isActive: boolean): void {
-  const btn = document.getElementById('mic-btn');
-  if (!btn) return;
-  btn.textContent = isActive ? 'mic on' : 'mic off';
-  btn.classList.toggle('active', isActive);
-}
+/** Mic UI is bound to `micActive` in Svelte; `writeMicActive` is the source of truth. */
+export function setMicButtonState(_isActive: boolean): void {}
 
 /** BPM display adapter: keeps DOM details out of audio feature bus. */
 export function renderBpmDisplay(features: AudioFeatures): void {

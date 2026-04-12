@@ -4,7 +4,7 @@ import { COLOR_BANKS } from '../../presets/constants';
 /** Legacy read surface: kept in sync by domain store writers (Step 3). Renders/FX still read `S` this pass. */
 export const S: AppState = {
   autoMode: false,
-  midiLearn: false,
+  controllerLearn: false,
   micActive: false,
   /** Slot 0 = `bars` (first in built-in bank). */
   currentPreset: 0,
@@ -12,8 +12,8 @@ export const S: AppState = {
   currentMode: 1,
   par1: 0,
   par2: 0,
-  speed: 50,
-  explode: 30,
+  speed: 0,
+  explode: 0,
   fx: [0, 0, 0, 0, 0, 0, 0, 0],
   eq: [0.0, 0.0, 0.0],
   banger: 0,

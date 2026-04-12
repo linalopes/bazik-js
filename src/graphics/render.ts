@@ -1,14 +1,13 @@
 import { S, bumpFrame, bumpAutoTimer, incrementFpsCounter, writeFpsTriple, eqGain, writeIsBreak } from '../core/state';
 import { analyzeAudio } from '../audio/analysis';
 import { getRenderSnapshot } from './engine/renderSnapshot';
-import { renderCanvas2DFrame } from './engine/Renderer';
+import { renderFrame } from './engine/Renderer';
 import { updateUI, syncBeatFlashOverlay } from '../ui/statusAndEq';
 import { nextPreset, setMode, adjustPar } from '../input/actions';
 import { autoPilot } from '../automation/AutoPilot';
 
 /**
- * App animation tick: audio → canvas engine → UI chrome → sim / FPS scheduling.
- * Canvas work is delegated to {@link renderCanvas2DFrame}; this file stays orchestration-only.
+ * App tick: audio features → preview canvas placeholder → status line / meters → auto-pilot.
  */
 export function render(): void {
   const audio = analyzeAudio({
@@ -18,14 +17,7 @@ export function render(): void {
   });
 
   const snapshot = getRenderSnapshot();
-  const phase = renderCanvas2DFrame(snapshot);
-  if (phase === 'fadeEarlyExit') {
-    bumpFrame();
-    syncBeatFlashOverlay(S.banger === 1);
-    updateUI();
-    requestAnimationFrame(render);
-    return;
-  }
+  renderFrame(snapshot);
 
   syncBeatFlashOverlay(S.banger === 1);
   updateUI();

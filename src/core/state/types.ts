@@ -1,6 +1,6 @@
 export interface AppState {
   autoMode: boolean;
-  midiLearn: boolean;
+  controllerLearn: boolean;
   micActive: boolean;
   currentPreset: number;
   currentMode: number;
@@ -12,6 +12,7 @@ export interface AppState {
   eq: [number, number, number];
   banger: number;
   isBreak: boolean;
+  /** Preview screen blend: −100 full black, 0 normal, +100 full white washout. */
   fade: number;
   frame: number;
   xy: { x: number; y: number };

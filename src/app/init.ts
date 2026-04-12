@@ -1,6 +1,5 @@
 import { initMainCanvas } from '../graphics/context';
 import { render } from '../graphics/render';
-import { buildPresetBank } from '../ui/presetBank';
 import { buildFxStrip, updateFxSlot } from '../ui/fxStrip';
 import {
   selectPreset,
@@ -10,6 +9,8 @@ import {
   setPar2Value,
   setSpeedValue,
   setExplodeValue,
+  refreshParDisplays,
+  refreshScreenBlendUi,
 } from '../input/actions';
 import { setupXYPad } from '../input/xyPad';
 import { makeKnob, updateKnob } from '../input/knobs';
@@ -26,7 +27,6 @@ export async function init(): Promise<void> {
 
   await initializePresetRegistry();
   refreshPresetList();
-  buildPresetBank(selectPreset);
   buildFxStrip();
   selectColorBank(0);
   setupXYPad();
@@ -38,9 +38,19 @@ export async function init(): Promise<void> {
     ind.className = 'knob-indicator';
     ind.id = 'ind-' + p;
     el.appendChild(ind);
-    makeKnob('knob-' + p, p);
+    makeKnob('knob-' + p, p, refreshParDisplays);
     updateKnob(p, S[p]);
   });
+
+  const screenKnob = document.getElementById('knob-screen');
+  if (screenKnob) {
+    const indS = document.createElement('div');
+    indS.className = 'knob-indicator';
+    indS.id = 'ind-screen';
+    screenKnob.appendChild(indS);
+    makeKnob('knob-screen', 'screen', refreshScreenBlendUi);
+    updateKnob('screen', S.fade);
+  }
 
   const saved = loadStateFromStorage();
   if (saved) {
@@ -48,10 +58,10 @@ export async function init(): Promise<void> {
     // Migration hook: branch by schemaVersion when payload upgrades require transforms.
     void schemaVersion;
     // Build phase: do not restore preset/mode from storage (deterministic bars + mode 1 below).
-    if (saved.par1) setPar1Value(saved.par1);
-    if (saved.par2) setPar2Value(saved.par2);
-    if (saved.speed) setSpeedValue(saved.speed);
-    if (saved.explode) setExplodeValue(saved.explode);
+    if (typeof saved.par1 === 'number') setPar1Value(saved.par1);
+    if (typeof saved.par2 === 'number') setPar2Value(saved.par2);
+    if (typeof saved.speed === 'number') setSpeedValue(saved.speed);
+    if (typeof saved.explode === 'number') setExplodeValue(saved.explode);
     if (saved.fx) saved.fx.forEach((v, i) => {
       writeFxAt(i, v!);
       updateFxSlot(i);

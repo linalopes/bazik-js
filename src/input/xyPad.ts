@@ -14,11 +14,6 @@ export function setupXYPad(): void {
     writeXy({ x, y });
     writePar('par1', Math.round((x - 0.5) * 200));
     writePar('par2', Math.round((0.5 - y) * 200));
-    const dot = document.getElementById('xy-dot');
-    if (dot) {
-      dot.style.left = x * 100 + '%';
-      dot.style.top = y * 100 + '%';
-    }
     refreshParDisplays();
   };
   pad.addEventListener('mousedown', (e) => {

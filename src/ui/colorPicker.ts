@@ -1,6 +1,5 @@
 import { S, writeActiveColor, writeColorAt } from '../core/state';
 import { hslToHex, hexToHsl } from '../utils/color';
-import { buildSwatches } from './swatches';
 
 let cpTargetIndex = 0;
 let cpH = 0;
@@ -60,9 +59,6 @@ function cpUpdateFromHSL(): void {
   const preview = document.getElementById('cp-preview');
   if (preview) preview.style.background = hex;
   writeColorAt(cpTargetIndex, hex);
-  buildSwatches();
-  const swatches = document.querySelectorAll('.swatch');
-  if (swatches[cpTargetIndex]) swatches[cpTargetIndex]!.classList.add('active');
 }
 
 function cpPickFromWheel(e: MouseEvent | TouchEvent): void {

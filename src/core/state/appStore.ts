@@ -4,7 +4,7 @@ import type { ParKey } from './types';
 
 /** Core runtime fields not owned by preset/transport/color/fx stores. */
 export const autoMode = writable(S.autoMode);
-export const midiLearn = writable(S.midiLearn);
+export const controllerLearn = writable(S.controllerLearn);
 export const micActive = writable(S.micActive);
 export const par1 = writable(S.par1);
 export const par2 = writable(S.par2);
@@ -26,9 +26,9 @@ export function writeAutoMode(v: boolean): void {
   autoMode.set(v);
 }
 
-export function writeMidiLearn(v: boolean): void {
-  S.midiLearn = v;
-  midiLearn.set(v);
+export function writeControllerLearn(v: boolean): void {
+  S.controllerLearn = v;
+  controllerLearn.set(v);
 }
 
 export function writeMicActive(v: boolean): void {
@@ -37,31 +37,46 @@ export function writeMicActive(v: boolean): void {
 }
 
 export function writePar(k: ParKey, v: number): void {
+  const c = clampBipolarKnob(v);
   if (k === 'par1') {
-    S.par1 = v;
-    par1.set(v);
+    S.par1 = c;
+    par1.set(c);
+    S.speed = c;
+    speed.set(c);
   } else {
-    S.par2 = v;
-    par2.set(v);
+    S.par2 = c;
+    par2.set(c);
+    S.explode = c;
+    explode.set(c);
   }
 }
 
+export function clampBipolarKnob(v: number): number {
+  return Math.max(-100, Math.min(100, Math.round(v)));
+}
+
 export function writeSpeed(v: number): void {
-  S.speed = v;
-  speed.set(v);
+  const c = clampBipolarKnob(v);
+  S.speed = c;
+  speed.set(c);
+  S.par1 = c;
+  par1.set(c);
 }
 
 export function writeExplode(v: number): void {
-  S.explode = v;
-  explode.set(v);
+  const c = clampBipolarKnob(v);
+  S.explode = c;
+  explode.set(c);
+  S.par2 = c;
+  par2.set(c);
 }
 
 export function adjustSpeed(delta: number): void {
-  writeSpeed(Math.max(0, Math.min(100, S.speed + delta)));
+  writeSpeed(S.speed + delta);
 }
 
 export function adjustExplode(delta: number): void {
-  writeExplode(Math.max(0, Math.min(100, S.explode + delta)));
+  writeExplode(S.explode + delta);
 }
 
 export function writeBanger(v: number): void {
@@ -75,8 +90,9 @@ export function writeIsBreak(v: boolean): void {
 }
 
 export function writeFade(v: number): void {
-  S.fade = v;
-  fade.set(v);
+  const c = Math.max(-100, Math.min(100, Math.round(v)));
+  S.fade = c;
+  fade.set(c);
 }
 
 export function writeFrame(v: number): void {

@@ -1,5 +1,4 @@
 import { S } from '../core/state';
-import { PRESETS } from '../presets/list';
 
 /** Preview beat flash overlay (outside EQ/status DOM). Called from render orchestration. */
 export function syncBeatFlashOverlay(on: boolean): void {
@@ -23,19 +22,5 @@ export function updateUI(): void {
     if (el) el.style.height = Math.max(2, barH[i]!) + '%';
   }
 
-  const stPreset = document.getElementById('st-preset');
-  if (stPreset) stPreset.textContent = PRESETS[S.currentPreset]!.name;
-  const stMode = document.getElementById('st-mode');
-  if (stMode) stMode.textContent = String(S.currentMode);
-  const stPar1 = document.getElementById('st-par1');
-  if (stPar1) stPar1.textContent = String(S.par1);
-  const stPar2 = document.getElementById('st-par2');
-  if (stPar2) stPar2.textContent = String(S.par2);
-  const stEq = document.getElementById('st-eq');
-  if (stEq)
-    stEq.textContent = S.eq[0].toFixed(2) + ' / ' + S.eq[1].toFixed(2) + ' / ' + S.eq[2].toFixed(2);
-  const stBeat = document.getElementById('st-beat');
-  if (stBeat) stBeat.style.display = S.banger ? 'block' : 'none';
-  const stFps = document.querySelector('#st-fps span');
-  if (stFps) stFps.textContent = String(S.fps);
+  /* st-eq / st-beat / st-fps: Svelte-bound via `eq`, `banger`, `fps` stores */
 }

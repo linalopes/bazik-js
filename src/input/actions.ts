@@ -19,9 +19,9 @@ import { getManifestAt, getPresetIndexById, PRESETS } from '../presets/list';
 import { COLOR_BANKS } from '../presets/constants';
 import { PRESET_BEHAVIOR_CONFIG } from '../presets/presetBehaviorConfig';
 import { toggleMic } from '../audio/analysis';
-import { resetControllerBindings, toggleControllerLearn } from './controllerLearn';
-import { buildSwatches } from '../ui/swatches';
+import { resetControllerBindings } from './controllerLearn';
 import { cvs } from '../graphics/context';
+import { activeTopTab, type TopTab } from '../ui/stores/navStore';
 import { saveStateToStorage } from '../persistence/storage';
 import { updateKnob } from './knobs';
 
@@ -30,38 +30,17 @@ export function refreshParDisplays(): void {
 }
 
 function syncParLabels(): void {
-  const p1s = ['par1-val', 'par1r-val'];
-  const p2s = ['par2-val', 'par2-left-val'];
-  p1s.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(S.par1);
-  });
-  p2s.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(S.par2);
-  });
-  const xpct = (S.par1 + 100) / 200;
-  const ypct = 1 - (S.par2 + 100) / 200;
-  const dot = document.getElementById('xy-dot');
-  if (dot) {
-    dot.style.left = xpct * 100 + '%';
-    dot.style.top = ypct * 100 + '%';
-  }
+  /* Knobs stay imperative until canvas/knob migration; labels + XY are Svelte-bound. */
+  updateKnob('speed', S.par1);
+  updateKnob('explode', S.par2);
 }
 
-export function switchTab(tab: string): void {
-  (['controls', 'presets', 'options'] as const).forEach((t) => {
-    document.getElementById('tab-' + t)?.classList.toggle('active', t === tab);
-  });
+export function switchTab(tab: TopTab): void {
+  activeTopTab.set(tab);
 }
 
 export function toggleAuto(): void {
   writeAutoMode(!S.autoMode);
-  document.getElementById('auto-led')?.classList.toggle('on', S.autoMode);
-}
-
-export function toggleMidiLearn(): void {
-  toggleControllerLearn();
 }
 
 export function resetControllerMappings(): void {
@@ -69,12 +48,10 @@ export function resetControllerMappings(): void {
 }
 
 export { toggleMic };
+export { toggleControllerLearn } from './controllerLearn';
 
 export function selectPreset(i: number): void {
   writeCurrentPreset(i);
-  document.querySelectorAll('.preset-thumb').forEach((t, j) => t.classList.toggle('active', j === i));
-  const badge = document.getElementById('preset-badge');
-  if (badge) badge.textContent = PRESETS[i]!.name;
   applyPresetDefaultsIfEnabled(i);
 }
 
@@ -86,7 +63,6 @@ function applyPresetDefaultsIfEnabled(i: number): void {
   setPar2Value(manifest.defaultParams.par2);
   if (PRESET_BEHAVIOR_CONFIG.applyDefaultColorsOnSelect) {
     writeColors([...manifest.defaultColors]);
-    buildSwatches();
   }
 }
 
@@ -122,23 +98,14 @@ export function doShift(): void {
 
 export function setMode(m: number): void {
   writeCurrentMode(m);
-  document.querySelectorAll('.mode-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === m));
-  const modeBadge = document.getElementById('mode-badge');
-  if (modeBadge) modeBadge.textContent = 'mode ' + m;
-  const stMode = document.getElementById('st-mode');
-  if (stMode) stMode.textContent = String(m);
 }
 
 export function startBreak(): void {
   writeIsBreak(true);
-  document.getElementById('break-center')?.classList.add('pressed');
-  document.getElementById('break-left')?.classList.add('teal-active');
 }
 
 export function endBreak(): void {
   writeIsBreak(false);
-  document.getElementById('break-center')?.classList.remove('pressed');
-  document.getElementById('break-left')?.classList.remove('teal-active');
 }
 
 export function adjustPar(par: ParKey, delta: number): void {
@@ -159,55 +126,26 @@ export function randomizePars(): void {
   syncParLabels();
 }
 
-export function setFade(v: string): void {
-  const visibility = Math.max(0, Math.min(100, parseInt(v, 10)));
-  if (!screenBlackoutActive) {
-    writeFade(visibilityToFade(visibility));
-  }
-  syncFadeUi(visibility);
+export function adjustScreenBlend(delta: number): void {
+  writeFade(S.fade + delta);
+  refreshScreenBlendUi();
 }
 
-export function triggerBlackout(): void {
-  screenBlackoutActive = !screenBlackoutActive;
-  if (screenBlackoutActive) {
-    writeFade(100);
-  } else {
-    const visibility = getCurrentFadeVisibility();
-    writeFade(visibilityToFade(visibility));
-  }
-  syncBlackoutUi(screenBlackoutActive);
+/** Controller / shortcut: snap preview screen to neutral. */
+export function resetScreenBlend(): void {
+  writeFade(0);
+  refreshScreenBlendUi();
 }
 
-let screenBlackoutActive = false;
-
-function visibilityToFade(visibility: number): number {
-  return 100 - visibility;
-}
-
-function getCurrentFadeVisibility(): number {
-  const slider = document.getElementById('fade-slider') as HTMLInputElement | null;
-  if (!slider) return 100 - S.fade;
-  const n = parseInt(slider.value, 10);
-  return Math.max(0, Math.min(100, Number.isNaN(n) ? 100 - S.fade : n));
-}
-
-function syncFadeUi(visibility: number): void {
-  const el = document.getElementById('fade-val');
-  if (el) el.textContent = String(visibility);
-}
-
-function syncBlackoutUi(active: boolean): void {
-  const btn = document.getElementById('screen-blackout-btn');
-  if (!btn) return;
-  btn.classList.toggle('active', active);
+/** Knob drag, ± buttons, and external resets: keep indicator in sync (readout is Svelte-bound). */
+export function refreshScreenBlendUi(): void {
+  updateKnob('screen', S.fade);
 }
 
 export function selectColorBank(i: number): void {
   const idx = Math.max(0, Math.min(COLOR_BANKS.length - 1, i | 0));
   writeActiveColorBank(idx);
   writeColors([...COLOR_BANKS[idx]!]);
-  document.querySelectorAll('.cbank-btn').forEach((b, j) => b.classList.toggle('active', j === idx));
-  buildSwatches();
 }
 
 export function setEqGain(band: 'bass' | 'mid' | 'high', val: string): void {
@@ -234,7 +172,7 @@ export function cloneState(): void {
 
 export function exportFrame(): void {
   const link = document.createElement('a');
-  link.download = 'bazikjs_' + Date.now() + '.png';
+  link.download = 'bazik-js_' + Date.now() + '.png';
   link.href = cvs.toDataURL('image/png');
   link.click();
 }
@@ -248,29 +186,27 @@ export function toggleFxPanel(): void {
 /** Used by hardware router: store + UI knob sync */
 export function applySpeedDelta(delta: number): void {
   adjustSpeed(delta);
-  updateKnob('speed', S.speed);
+  syncParLabels();
 }
 
 /** Used by hardware router */
 export function applyExplodeDelta(delta: number): void {
   adjustExplode(delta);
-  updateKnob('explode', S.explode);
+  syncParLabels();
 }
 
-/** MIDI / absolute set */
+/** Absolute set (e.g. future hardware controller integration). */
 export function setSpeedValue(v: number): void {
-  const nv = Math.max(0, Math.min(100, v));
-  writeSpeed(nv);
-  updateKnob('speed', nv);
+  writeSpeed(v);
+  syncParLabels();
 }
 
 export function setExplodeValue(v: number): void {
-  const nv = Math.max(0, Math.min(100, v));
-  writeExplode(nv);
-  updateKnob('explode', nv);
+  writeExplode(v);
+  syncParLabels();
 }
 
-/** Absolute par (e.g. MIDI); keeps XY dot + labels in sync. */
+/** Absolute par; keeps XY dot + labels in sync. */
 export function setPar1Value(v: number): void {
   writePar('par1', Math.max(-100, Math.min(100, Math.round(v))));
   syncParLabels();

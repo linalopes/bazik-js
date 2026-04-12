@@ -1,4 +1,4 @@
-import { S, writeMidiLearn } from '../core/state';
+import { S, writeControllerLearn } from '../core/state';
 import {
   bindPhysicalKeyToSemantic,
   getCurrentBindings,
@@ -45,7 +45,7 @@ function semanticLabel(s: string): string {
 }
 
 function setLearnUi(active: boolean, target?: SemanticId): void {
-  const btn = document.getElementById('midi-btn');
+  const btn = document.getElementById('controller-learn-btn');
   if (!btn) return;
   btn.classList.toggle('active', active);
   btn.textContent = active && target ? `listening: ${semanticLabel(target)}` : 'controller learn';
@@ -54,7 +54,7 @@ function setLearnUi(active: boolean, target?: SemanticId): void {
 function refreshLearnHighlights(): void {
   const all = document.querySelectorAll<HTMLElement>('[data-controller-target]');
   all.forEach((el) => {
-    el.classList.toggle('controller-learn-target', S.midiLearn);
+    el.classList.toggle('controller-learn-target', S.controllerLearn);
     const isSel = selectedTargetEl === el;
     el.classList.toggle('controller-learn-selected', isSel);
   });
@@ -62,7 +62,7 @@ function refreshLearnHighlights(): void {
 
 export function beginControllerLearn(target: SemanticId): void {
   learnTarget = target;
-  writeMidiLearn(true);
+  writeControllerLearn(true);
   setLearnUi(true, target);
   refreshLearnHighlights();
 }
@@ -71,23 +71,23 @@ export function cancelControllerLearn(): void {
   learnTarget = null;
   if (selectedTargetEl) selectedTargetEl.classList.remove('controller-learn-selected');
   selectedTargetEl = null;
-  writeMidiLearn(false);
+  writeControllerLearn(false);
   setLearnUi(false);
   refreshLearnHighlights();
 }
 
 export function toggleControllerLearn(): void {
-  if (S.midiLearn) {
+  if (S.controllerLearn) {
     cancelControllerLearn();
     return;
   }
-  writeMidiLearn(true);
+  writeControllerLearn(true);
   setLearnUi(true);
   refreshLearnHighlights();
 }
 
 function onLearnTargetClickCapture(e: Event): void {
-  if (!S.midiLearn) return;
+  if (!S.controllerLearn) return;
   const t = e.target as HTMLElement | null;
   if (!t) return;
   const hit = t.closest<HTMLElement>('[data-controller-target]');
@@ -105,19 +105,19 @@ function onLearnTargetClickCapture(e: Event): void {
 
 /** Called from KeyboardInput before regular routing; consumes the key when learning. */
 export function captureControllerLearnKey(e: KeyboardEvent): boolean {
-  if (!S.midiLearn || !learnTarget) return false;
+  if (!S.controllerLearn || !learnTarget) return false;
   if (e.ctrlKey || e.metaKey || e.altKey) return false;
   const key = normalizePhysicalKey(e.key);
   if (!key) return false;
   bindPhysicalKeyToSemantic(key, learnTarget);
   saveControllerBindings(getCurrentBindings());
-  const btn = document.getElementById('midi-btn');
+  const btn = document.getElementById('controller-learn-btn');
   if (btn) btn.textContent = `mapped ${key} -> ${semanticLabel(learnTarget)}`;
   if (selectedTargetEl) selectedTargetEl.classList.remove('controller-learn-selected');
   selectedTargetEl = null;
   learnTarget = null;
   window.setTimeout(() => {
-    if (S.midiLearn) {
+    if (S.controllerLearn) {
       setLearnUi(true);
       refreshLearnHighlights();
     }
@@ -140,7 +140,7 @@ export function resetControllerBindings(): void {
   resetBindingsToDefaults();
   clearControllerBindings();
   cancelControllerLearn();
-  const btn = document.getElementById('midi-btn');
+  const btn = document.getElementById('controller-learn-btn');
   if (btn) {
     btn.textContent = 'bindings reset';
     window.setTimeout(() => {

@@ -32,9 +32,91 @@ body {
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
-.bazik-root {
+.app-shell {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Viewport gate: desktop-first; block narrow and portrait-tablet layouts (see media query below). */
+.viewport-gate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px;
+  background: rgba(34, 17, 62, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.viewport-gate-card {
+  max-width: 22rem;
+  text-align: center;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 22px;
+  background: var(--surface);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.viewport-gate-brand {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.viewport-gate-brand span {
+  color: var(--pink);
+}
+
+.viewport-gate-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.viewport-gate-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/*
+  Show gate when:
+  - width ≤ 767px (phones and very narrow windows), or
+  - portrait with width ≤ 1024px (tablet/phone portrait; typical tablet landscape stays usable).
+
+  Matches .bazik-js-root min-width ~900px: landscape widths ≥768 still pass unless portrait.
+*/
+@media (max-width: 767px), screen and (orientation: portrait) and (max-width: 1024px) {
+  .viewport-gate {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-shell {
+    filter: brightness(0.42) saturate(0.8);
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+.bazik-js-root {
   background: var(--deep-purple);
   padding: 12px;
   min-width: 900px;
@@ -85,29 +167,63 @@ body {
   flex-shrink: 0;
 }
 .logo span { color: var(--turquoise); }
-.logo sub {
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-  color: var(--text-muted);
-  vertical-align: super;
-  letter-spacing: 1px;
-  margin-left: 2px;
+/* Top bar tabs: explicit button + .topbar chain beats UA button styles and matches layout context */
+.topbar .nav-tabs {
+  display: flex;
+  gap: 3px;
+  align-items: center;
 }
-.nav-tabs { display: flex; gap: 3px; }
-.tab {
+.topbar .nav-tabs button.tab {
   font-family: 'Courier Prime', monospace;
   font-size: 10px;
+  font-weight: 600;
   padding: 5px 11px;
-  border: 0.5px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
+  margin: 0;
+  border: 0.5px solid rgba(202, 216, 216, 0.14);
   border-radius: var(--radius);
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  transition: all 0.12s;
+  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+  /* Inactive: dark purple chip (segmented control) */
+  background-color: var(--surface);
+  color: rgba(186, 174, 220, 0.58);
 }
-.tab:hover, .tab.active { border-color: var(--turquoise); color: var(--turquoise); background: rgba(8,242,219,0.06); }
+.topbar .nav-tabs button.tab:hover:not(.active) {
+  background-color: var(--surface2);
+  color: rgba(202, 216, 216, 0.62);
+  border-color: rgba(202, 216, 216, 0.22);
+}
+/* Selected = fill only; no contrasting border (avoids “outlined pill” look) */
+.topbar .nav-tabs button.tab.active {
+  background-color: var(--turquoise);
+  color: var(--deep-purple);
+  border-color: transparent;
+  box-shadow: none;
+}
+.topbar .nav-tabs button.tab.active:hover {
+  background-color: var(--turquoise);
+  color: var(--deep-purple);
+  border-color: transparent;
+  box-shadow: none;
+}
+/* Mouse focus after click: no ring. Keyboard on inactive tab: outer ring. Keyboard on active: inset only (not a second “selected” chrome). */
+.topbar .nav-tabs button.tab:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+.topbar .nav-tabs button.tab:focus-visible:not(.active) {
+  outline: 2px solid var(--turquoise);
+  outline-offset: 2px;
+}
+.topbar .nav-tabs button.tab.active:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(34, 17, 62, 0.35);
+}
 .bpm-display {
   font-family: 'Courier Prime', monospace;
   font-size: 12px;
@@ -126,24 +242,30 @@ body {
   font-weight: 600;
   padding: 4px 10px;
   border-radius: var(--radius);
-  border: 0.5px solid rgba(202,216,216,0.35);
-  background: rgba(202,216,216,0.08);
-  color: rgba(202,216,216,0.92);
-  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  border: 0.5px solid rgba(234, 125, 255, 0.25);
+  background: transparent;
+  color: rgba(234, 125, 255, 0.5);
+  text-shadow: none;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.12s;
 }
-.mic-status:hover {
-  border-color: rgba(202,216,216,0.6);
-  color: var(--white);
+.mic-status:hover:not(.active) {
+  border-color: var(--pink);
+  color: var(--pink);
+  background: transparent;
 }
 .mic-status.active {
   border-color: var(--pink);
   color: #1f1135;
   background: rgba(234,125,255,0.95);
   text-shadow: none;
+}
+.mic-status.active:hover {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234,125,255,0.95);
 }
 .btn-small {
   font-family: 'Courier Prime', monospace;
@@ -158,7 +280,6 @@ body {
   text-transform: uppercase;
   transition: all 0.12s;
 }
-.btn-small:hover { border-color: var(--pink); color: var(--pink); }
 .spacer { flex: 1; }
 
 /* ─── MAIN GRID ─── */
@@ -168,6 +289,14 @@ body {
   gap: 10px;
   min-height: 0;
   align-items: stretch;
+  position: relative;
+  z-index: 2;
+}
+/* Side columns above center in stacking order so controls stay clickable if anything bleeds. */
+.left-panel,
+.right-panel {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── PANEL SHARED ─── */
@@ -176,7 +305,6 @@ body {
   font-size: 9px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text-dim);
   margin-bottom: 5px;
 }
 .section { margin-bottom: 10px; }
@@ -199,7 +327,6 @@ body {
   background: rgba(34,17,62,0.22);
 }
 .left-panel .panel-label { margin-bottom: 5px; }
-.left-panel .screen-actions { margin-bottom: 5px; }
 
 .auto-row {
   display: flex;
@@ -230,7 +357,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
-.midi-btn {
+.controller-btn {
   margin-left: 0;
   font-family: 'Courier Prime', monospace;
   font-size: 9px;
@@ -244,79 +371,119 @@ body {
   text-transform: uppercase;
   transition: all 0.12s;
 }
-.midi-btn:hover, .midi-btn.active { border-color: var(--pink); color: var(--pink); }
-.midi-btn.reset {
-  border-color: rgba(202,216,216,0.22);
-  color: rgba(202,216,216,0.6);
+.controller-btn:hover:not(.active) {
+  border-color: var(--pink);
+  color: var(--pink);
+  background: transparent;
 }
-.midi-btn.reset:hover {
-  border-color: rgba(202,216,216,0.5);
-  color: var(--white);
+/* .controller-btn.reset: colors/hover/press = shared bang/trigger block after .right-btn */
+/* Controller learn toggled on — same filled active model as pink toggles (blackout removed) */
+#controller-learn-btn.active {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
+  text-shadow: none;
+}
+#controller-learn-btn.active:hover {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
 }
 
-/* ── EQ GAIN SLIDERS (3 bands, vertical) */
+/* ── EQ GAIN SLIDERS (3 bands, vertical) — neutral label + track; band color only on thumbs; bars stay colored */
 .eq-gain-row {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: flex-start;
   margin-bottom: 6px;
-  height: 38px;
+  height: 46px;
 }
 .eq-band {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
+  min-width: 0;
 }
 .eq-band-label {
   font-family: 'Courier Prime', monospace;
-  font-size: 7px;
-  letter-spacing: 1px;
+  font-size: 8px;
+  letter-spacing: 0.65px;
   text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(202, 216, 216, 0.52);
 }
-.eq-band-label.bass { color: var(--pink); }
-.eq-band-label.mid  { color: var(--turquoise); }
-.eq-band-label.high { color: rgba(202,216,216,0.5); }
 .eq-gain-slider {
   -webkit-appearance: none;
   appearance: none;
   writing-mode: vertical-lr;
   direction: rtl;
   width: 100%;
-  height: 24px;
+  min-width: 20px;
+  height: 32px;
   background: transparent;
   cursor: pointer;
   padding: 0;
 }
 .eq-gain-slider::-webkit-slider-runnable-track {
-  width: 3px;
-  background: var(--border);
+  width: 4px;
   border-radius: 2px;
+  background: rgba(34, 17, 62, 0.85);
+  box-shadow: inset 0 0 0 0.5px rgba(202, 216, 216, 0.14);
+}
+.eq-gain-slider::-moz-range-track {
+  width: 4px;
+  border-radius: 2px;
+  background: rgba(34, 17, 62, 0.85);
+  box-shadow: inset 0 0 0 0.5px rgba(202, 216, 216, 0.14);
 }
 .eq-gain-slider.bass::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; height: 5px;
+  width: 14px;
+  height: 6px;
   background: var(--pink);
   border-radius: 2px;
-  margin-left: -4px;
+  margin-left: -5px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35);
   cursor: pointer;
 }
 .eq-gain-slider.mid::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; height: 5px;
+  width: 14px;
+  height: 6px;
   background: var(--turquoise);
   border-radius: 2px;
-  margin-left: -4px;
+  margin-left: -5px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35);
   cursor: pointer;
 }
 .eq-gain-slider.high::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; height: 5px;
-  background: rgba(202,216,216,0.5);
+  width: 14px;
+  height: 6px;
+  background: rgba(202, 216, 216, 0.72);
   border-radius: 2px;
-  margin-left: -4px;
+  margin-left: -5px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+}
+.eq-gain-slider::-moz-range-thumb {
+  width: 14px;
+  height: 6px;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.eq-gain-slider.bass::-moz-range-thumb {
+  background: var(--pink);
+}
+.eq-gain-slider.mid::-moz-range-thumb {
+  background: var(--turquoise);
+}
+.eq-gain-slider.high::-moz-range-thumb {
+  background: rgba(202, 216, 216, 0.72);
 }
 
 /* ── EQ METER (visualizer bars) */
@@ -336,9 +503,9 @@ body {
 }
 .eq-meter-bar.bass { background: var(--pink); }
 .eq-meter-bar.mid  { background: var(--turquoise); }
-.eq-meter-bar.high { background: rgba(202,216,216,0.4); }
+.eq-meter-bar.high { background: rgba(202, 216, 216, 0.52); }
 
-/* ── ACTION BUTTONS (shift/break/pars/presets/colors/fade) */
+/* ── ACTION BUTTONS (shift/break/pars/presets/colors) */
 .action-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -380,23 +547,37 @@ body {
 .swatch:hover { transform: scale(1.05); }
 .swatch.active { border-color: white !important; border-width: 1.5px; }
 
-/* ── COLOR BANK BUTTONS (8 preset banks) */
+/* ── COLOR BANK BUTTONS (8 preset banks) — pink toggle family; .active = selected bank */
 .color-bank-btns { display: flex; gap: 2px; }
 .cbank-btn {
   flex: 1;
   font-family: 'Courier Prime', monospace;
   font-size: 9px;
   height: 22px;
-  border: 0.5px solid var(--border);
+  border: 0.5px solid rgba(234, 125, 255, 0.25);
   background: transparent;
-  color: var(--text-muted);
+  color: rgba(234, 125, 255, 0.5);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.12s;
   padding: 0;
 }
-.cbank-btn:hover  { border-color: var(--turquoise); color: var(--turquoise); }
-.cbank-btn.active { background: rgba(8,242,219,0.1); border-color: var(--turquoise); color: var(--turquoise); }
+.cbank-btn:hover {
+  border-color: var(--pink);
+  color: var(--pink);
+  background: transparent;
+}
+.cbank-btn.active {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
+  text-shadow: none;
+}
+.cbank-btn.active:hover {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
+}
 
 /* ── PAR FIELDS */
 .par-field {
@@ -422,56 +603,32 @@ body {
   font-size: 10px; color: var(--text-primary);
 }
 
-/* ── FADE SECTION */
-.fade-section { margin-bottom: 4px; }
-.fade-knob-row {
+/* ── SCREEN: one bipolar knob + par-style stepper (same language as PARAMETERS) */
+.screen-blend-col {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
-.fade-control-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.screen-actions { margin-bottom: 7px; }
-.fade-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.fade-inline-label {
-  margin: 0;
-  min-width: 30px;
-  color: rgba(202,216,216,0.55);
-}
-.fade-action {
+.screen-blend-stepper.par-field {
   width: 100%;
-  padding: 6px 0;
-}
-.fade-slider-h {
-  flex: 1 1 auto;
-  min-width: 0;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--border);
-  cursor: pointer;
-  accent-color: var(--gray-green);
-}
-.fade-slider-h::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 13px; height: 13px;
-  border-radius: 50%;
-  background: var(--gray-green);
-  border: 0.5px solid rgba(202,216,216,0.5);
-  cursor: pointer;
+  max-width: 120px;
+  align-self: center;
 }
 
 /* ─── CENTER PANEL ─── */
-.center-panel { display: flex; flex-direction: column; gap: 6px; min-height: 0; justify-content: center; }
+/* min-width:0 lets the 1fr track shrink below canvas intrinsic min-width (~960px); overflow:hidden
+   clips paint/hit so the preview cannot extend over the right column at wide viewports. */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  justify-content: flex-start;
+  align-items: stretch;
+}
 
 .preview-wrap {
   position: relative;
@@ -508,12 +665,20 @@ body {
 }
 .beat-flash.on { opacity: 0.04; }
 
+/* Transport sits in center column under canvas — same width as preview, not full lower-band */
+.preview-transport {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
 .transport-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 .transport-btn {
   font-family: 'Courier Prime', monospace;
@@ -525,10 +690,30 @@ body {
   transition: all 0.12s;
 }
 .transport-btn:hover { border-color: var(--pink); color: var(--pink); }
-.transport-btn.shift-btn { border-color: rgba(234,125,255,0.35); color: var(--pink); background: rgba(234,125,255,0.05); }
-.transport-btn.shift-btn:hover { background: rgba(234,125,255,0.1); }
-.transport-btn.break-btn { margin-left: 0; }
-.transport-btn.break-btn.pressed { background: rgba(234,125,255,0.15); border-color: var(--pink); color: var(--pink); }
+/* .transport-btn.shift-btn: default/hover/active = shared bang/trigger block after .right-btn */
+/* Break: same branded default / hover / pressed as Controller Learn + mic */
+.transport-btn.break-btn {
+  margin-left: 0;
+  border-color: rgba(234, 125, 255, 0.25);
+  color: rgba(234, 125, 255, 0.5);
+  background: transparent;
+}
+.transport-btn.break-btn:hover:not(.pressed) {
+  border-color: var(--pink);
+  color: var(--pink);
+  background: transparent;
+}
+.transport-btn.break-btn.pressed {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
+  text-shadow: none;
+}
+.transport-btn.break-btn.pressed:hover {
+  border-color: var(--pink);
+  color: #1f1135;
+  background: rgba(234, 125, 255, 0.95);
+}
 .nav-arrows { display: flex; gap: 2px; }
 .arrow-btn {
   width: 27px; height: 27px;
@@ -538,35 +723,80 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; transition: all 0.12s;
 }
-.arrow-btn:hover { border-color: var(--turquoise); color: var(--turquoise); }
+/* .arrow-btn:hover / :active = shared bang/trigger block after .right-btn */
 
+/* Preset row: 8 columns; thumbs capped slightly smaller so FX row can read larger */
 .preset-bank {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 3px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  justify-items: center;
+  width: 100%;
+  margin-bottom: 10px;
 }
 .preset-thumb {
-  aspect-ratio: 1;
+  width: 100%;
+  min-width: 0;
   border-radius: var(--radius);
   border: 0.5px solid var(--border);
-  overflow: hidden; cursor: pointer;
-  position: relative; transition: border-color 0.12s;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  background: #050210;
 }
-.preset-thumb:hover { border-color: rgba(234,125,255,0.4); }
-.preset-thumb.active { border-color: var(--turquoise); }
-.preset-thumb canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+.preset-thumb:hover {
+  border-color: rgba(234, 125, 255, 0.45);
+}
+.preset-thumb.active {
+  border-color: var(--turquoise);
+  box-shadow:
+    0 0 0 1px rgba(8, 242, 219, 0.45),
+    0 0 14px rgba(8, 242, 219, 0.28);
+}
+.preset-thumb canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
 .preset-thumb .pt-label {
-  position: absolute; bottom: 1px; left: 0; right: 0;
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
   text-align: center;
-  font-family: 'Courier Prime', monospace; font-size: 7px;
-  color: rgba(202,216,216,0.6); letter-spacing: 0.5px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 7px;
+  color: rgba(202, 216, 216, 0.72);
+  letter-spacing: 0.45px;
   text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(5, 2, 16, 0.9);
 }
 
 /* ─── RIGHT PANEL ─── */
 .right-panel { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 
-.knob-row { display: flex; gap: 8px; justify-content: center; }
+/* Speed/explode knobs stacked above their par value boxes; wide gap reads as two distinct channels. */
+.param-knob-par-grid {
+  display: flex;
+  gap: 36px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.param-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  max-width: 120px;
+}
+.param-column .par-field {
+  width: 100%;
+  align-self: stretch;
+}
 .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .knob {
   width: 42px; height: 42px; border-radius: 50%;
@@ -589,13 +819,6 @@ body {
   font-size: 9px; color: var(--text-muted);
   text-transform: uppercase; letter-spacing: 1px;
 }
-.knob-val {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px; color: var(--turquoise);
-}
-
-.par-row { display: flex; gap: 4px; }
-
 .xy-pad-section {}
 .xy-pad {
   width: 100%; aspect-ratio: 1;
@@ -620,9 +843,24 @@ body {
   pointer-events: none; transition: left 0.04s, top 0.04s;
   box-shadow: 0 0 6px rgba(8,242,219,0.5);
 }
-.xy-labels { display: flex; justify-content: space-between; }
-
-.right-bottom-row { display: flex; gap: 3px; }
+.right-bottom-row { display: flex; gap: 3px; align-items: stretch; }
+/* Section title for this row; not interactive */
+.right-par-group-label {
+  flex: 1;
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 5px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+}
 .right-btn {
   flex: 1; font-family: 'Courier Prime', monospace; font-size: 9px;
   padding: 5px 0; border: 0.5px solid var(--border);
@@ -631,15 +869,54 @@ body {
   letter-spacing: 1px; text-transform: uppercase;
   transition: all 0.12s; text-align: center;
 }
-.right-btn:hover { border-color: var(--turquoise); color: var(--turquoise); }
+
+/* ══ Bang / trigger (one source): neutral → turquoise hover → turquoise press ══
+   SHIFT | arrows | save | clone | pars/fx | reset map (.controller-btn.reset)
+   Placed after .controller-btn:hover so .controller-btn.reset:hover wins over pink learn hover. */
+.transport-btn.shift-btn,
+.arrow-btn,
+.btn-small,
+.right-btn,
+.controller-btn.reset {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+.transport-btn.shift-btn:hover,
+.arrow-btn:hover,
+.btn-small:hover,
+.right-btn:hover,
+.controller-btn.reset:hover {
+  border-color: var(--turquoise);
+  color: var(--turquoise);
+  background: transparent;
+}
+.transport-btn.shift-btn:active,
+.arrow-btn:active,
+.btn-small:active,
+.right-btn:active,
+.controller-btn.reset:active {
+  border-color: var(--turquoise);
+  color: var(--turquoise);
+  background: rgba(8, 242, 219, 0.12);
+}
+
+/* ══ Toggle / switch (pink branded; per-control sizing — not one shared class) ══
+   Controller learn #controller-learn-btn | mic .mic-status | break .transport-btn.break-btn | banks .cbank-btn */
 
 /* ─── FX STRIP ─── */
 .lower-band {
   border-top: none;
-  padding-top: 8px;
+  padding-top: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
 }
 .fx-strip {
   border-top: none;
@@ -647,25 +924,33 @@ body {
 }
 .fx-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
 }
-.fx-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.fx-slot { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+/* Larger than PARAMETERS (42px); pink reads stronger; knob always interactive */
 .fx-knob {
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 50px; height: 50px; border-radius: 50%;
   border: 1.5px solid var(--border);
   background: radial-gradient(circle at 40% 35%, var(--surface2), var(--surface3));
   position: relative; cursor: ns-resize;
-  transition: border-color 0.12s; user-select: none; flex-shrink: 0;
+  transition: border-color 0.12s, box-shadow 0.12s; user-select: none; flex-shrink: 0;
 }
-.fx-knob:hover { border-color: var(--pink); }
-.fx-knob.active-knob { border-color: var(--pink); }
-.fx-knob.disabled-knob { opacity: 0.55; border-color: rgba(202,216,216,0.18); }
+.fx-knob:hover { border-color: rgba(234, 125, 255, 0.9); }
+.fx-knob.active-knob {
+  border-color: var(--pink);
+  box-shadow:
+    0 0 0 1px rgba(234, 125, 255, 0.55),
+    0 0 12px rgba(234, 125, 255, 0.35);
+}
 .fx-knob-indicator {
-  position: absolute; top: 4px; left: 50%;
-  transform: translateX(-50%); width: 2px; height: 6px;
-  background: rgba(234,125,255,0.5); border-radius: 1px;
+  position: absolute; top: 6px; left: 50%;
+  transform: translateX(-50%); width: 2px; height: 9px;
+  background: var(--pink);
+  border-radius: 1px;
   transform-origin: bottom center;
+  box-shadow: 0 0 4px rgba(234, 125, 255, 0.45);
 }
 .fx-par-row { display: flex; align-items: center; gap: 1px; }
 .fx-par-btn {
@@ -678,13 +963,13 @@ body {
 .fx-par-btn:hover { color: var(--pink); }
 .fx-par-val {
   font-family: 'Courier Prime', monospace; font-size: 8px;
-  color: var(--text-muted); min-width: 16px; text-align: center;
+  color: var(--text-muted); min-width: 22px; text-align: center;
 }
 .fx-name {
   font-family: 'Courier Prime', monospace; font-size: 8px;
   color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;
 }
-.fx-slot.fx-active .fx-name { color: var(--pink); }
+.fx-slot.fx-active .fx-name { color: var(--pink); text-shadow: 0 0 8px rgba(234, 125, 255, 0.25); }
 .fx-arm-btn {
   min-width: 24px;
   height: 12px;
@@ -706,8 +991,8 @@ body {
   color: var(--white);
 }
 .fx-arm-btn.armed {
-  border-color: rgba(234,125,255,0.6);
-  background: rgba(234,125,255,0.18);
+  border-color: var(--pink);
+  background: rgba(234, 125, 255, 0.22);
   color: var(--pink);
 }
 
