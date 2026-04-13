@@ -25,14 +25,6 @@ import { activeTopTab, type TopTab } from '../ui/stores/navStore';
 import { fxPanelOpen } from '../ui/stores/fxPanelStore';
 import { saveStateToStorage } from '../persistence/storage';
 
-export function refreshParDisplays(): void {
-  // Knob visuals are now Svelte-driven.
-}
-
-function syncParLabels(): void {
-  // Kept for compatibility with existing call sites.
-}
-
 export function switchTab(tab: TopTab): void {
   activeTopTab.set(tab);
 }
@@ -109,35 +101,25 @@ export function endBreak(): void {
 export function adjustPar(par: ParKey, delta: number): void {
   const v = Math.max(-100, Math.min(100, Math.round(S[par] + delta)));
   writePar(par, v);
-  syncParLabels();
 }
 
 export function resetPars(): void {
   writePar('par1', 0);
   writePar('par2', 0);
-  syncParLabels();
 }
 
 export function randomizePars(): void {
   writePar('par1', Math.round((Math.random() - 0.5) * 120));
   writePar('par2', Math.round((Math.random() - 0.5) * 120));
-  syncParLabels();
 }
 
 export function adjustScreenBlend(delta: number): void {
   writeFade(S.fade + delta);
-  refreshScreenBlendUi();
 }
 
 /** Controller / shortcut: snap preview screen to neutral. */
 export function resetScreenBlend(): void {
   writeFade(0);
-  refreshScreenBlendUi();
-}
-
-/** Knob drag, ± buttons, and external resets: keep indicator in sync (readout is Svelte-bound). */
-export function refreshScreenBlendUi(): void {
-  // Screen knob visual is Svelte-driven.
 }
 
 /** Absolute set for the SCREEN knob drag path. */
@@ -187,33 +169,27 @@ export function toggleFxPanel(): void {
 /** Used by hardware router: store + UI knob sync */
 export function applySpeedDelta(delta: number): void {
   adjustSpeed(delta);
-  syncParLabels();
 }
 
 /** Used by hardware router */
 export function applyExplodeDelta(delta: number): void {
   adjustExplode(delta);
-  syncParLabels();
 }
 
 /** Absolute set (e.g. future hardware controller integration). */
 export function setSpeedValue(v: number): void {
   writeSpeed(v);
-  syncParLabels();
 }
 
 export function setExplodeValue(v: number): void {
   writeExplode(v);
-  syncParLabels();
 }
 
 /** Absolute par; keeps XY dot + labels in sync. */
 export function setPar1Value(v: number): void {
   writePar('par1', Math.max(-100, Math.min(100, Math.round(v))));
-  syncParLabels();
 }
 
 export function setPar2Value(v: number): void {
   writePar('par2', Math.max(-100, Math.min(100, Math.round(v))));
-  syncParLabels();
 }

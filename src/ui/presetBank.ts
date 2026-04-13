@@ -169,23 +169,3 @@ export async function drawThumb(tc: HTMLCanvasElement, i: number, entry: PresetE
   drawGeneratedThumb(tx, i, NEUTRAL_THUMB_PALETTE);
 }
 
-export function buildPresetBank(onSelectPreset: (i: number) => void): void {
-  const bank = document.getElementById('preset-bank');
-  if (!bank) return;
-  getAllPresetEntries().forEach((entry, i) => {
-    const thumb = document.createElement('div');
-    thumb.className = 'preset-thumb' + (i === 0 ? ' active' : '');
-    thumb.id = 'preset-' + i;
-    const tc = document.createElement('canvas');
-    tc.width = 64;
-    tc.height = 64;
-    const lbl = document.createElement('div');
-    lbl.className = 'pt-label';
-    lbl.textContent = entry.manifest.name;
-    thumb.appendChild(tc);
-    thumb.appendChild(lbl);
-    thumb.onclick = () => onSelectPreset(i);
-    bank.appendChild(thumb);
-    void drawThumb(tc, i, entry);
-  });
-}

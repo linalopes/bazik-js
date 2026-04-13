@@ -280,7 +280,6 @@ body {
   text-transform: uppercase;
   transition: all 0.12s;
 }
-.spacer { flex: 1; }
 
 /* ─── MAIN GRID ─── */
 .main-grid {
@@ -328,34 +327,11 @@ body {
 }
 .left-panel .panel-label { margin-bottom: 5px; }
 
-.auto-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 10px;
-}
 .controller-row {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-}
-.led {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: rgba(8,242,219,0.1);
-  border: 0.5px solid rgba(8,242,219,0.4);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.12s;
-}
-.led.on { background: var(--turquoise); }
-.auto-label {
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
 }
 .controller-btn {
   margin-left: 0;
@@ -505,35 +481,6 @@ body {
 .eq-meter-bar.mid  { background: var(--turquoise); }
 .eq-meter-bar.high { background: rgba(202, 216, 216, 0.52); }
 
-/* ── ACTION BUTTONS (shift/break/pars/presets/colors) */
-.action-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  margin-bottom: 10px;
-}
-.action-btn {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  padding: 7px 0;
-  border: 0.5px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius);
-  cursor: pointer;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.12s;
-  text-align: center;
-}
-.action-btn:hover    { border-color: var(--pink); color: var(--pink); }
-.action-btn.active   { border-color: rgba(8,242,219,0.5); color: var(--turquoise); background: rgba(8,242,219,0.06); }
-.action-btn.shift-hi { border-color: rgba(234,125,255,0.4); color: var(--pink); }
-.action-btn.break-press { border-color: rgba(234,125,255,0.6); color: var(--pink); background: rgba(234,125,255,0.1); }
-
-/* ── COLLAPSIBLE SECTIONS */
-.collapsible { overflow: hidden; transition: max-height 0.2s ease; }
-.collapsible.hidden { max-height: 0 !important; }
 
 /* ── COLOR SWATCHES (4 active colors) */
 .color-swatches { display: flex; gap: 3px; margin-bottom: 4px; }
@@ -1019,8 +966,6 @@ body {
 .status-item span { color: var(--turquoise); }
 .status-item.warn span { color: var(--pink); }
 
-/* Knob rotation util */
-.knob-rotating { border-color: var(--turquoise) !important; }
 /* ─── COLOR PICKER POPOVER ─── */
 .cp-overlay {
   position: fixed; inset: 0; z-index: 999;

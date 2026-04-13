@@ -1,80 +1,149 @@
-# Bazik JS
+# BAZIK JS
 
 Repository / npm package name: `bazik-js`.
 
-## What it is
+## 1. Project Overview
 
-**Bazik JS** is a **browser-based visual instrument**: real-time graphics on a canvas, steered by direct manipulation and optional microphone input. It is a deliberate **homage to the original Bazik** (macOS-era reference), not a clone: same family of ideas (preset bank, color sets, performance-oriented layout), but its own codebase, constraints, and evolution.
+BAZIK JS is a browser-based audiovisual instrument and a homage to the original Bazik.
+It combines audio analysis, a canvas-based visual engine, and a performance-oriented control surface that can be driven by UI interactions and a controller mapping layer.
 
-Stack: **Svelte**, **TypeScript**, **Vite**, **Canvas 2D** (main preview), **Web Audio** (analysis path).
+## 2. Architecture Overview
 
-## Current architecture
+### 2.1 Svelte-driven UI
 
-**Svelte is the primary UI layer.** `App.svelte` composes the shell; an increasing share of controls are **Svelte components** bound to **Svelte stores**. Domain logic still centers on a **mutable singleton `S`** (`src/core/state/singleton.ts`); store writers (`writePar`, `writeCurrentPreset`, `writeFade`, etc. in `src/core/state/*.ts`) keep **`S` and stores in sync** so the UI can subscribe without duplicating source-of-truth rules.
+Most visible UI is now reactive and store-driven through `App.svelte` + UI components in `src/ui/components`.
 
-**Rendering and audio stay imperative.** The preview is driven by a **requestAnimationFrame** loop (`src/graphics/render.ts`) that reads snapshot state and draws via **Canvas 2D** (`src/graphics/engine/Renderer.ts`, `src/graphics/presetDraws.ts`). The **Web Audio** graph and feature extraction live under `src/audio/` and feed state through adapters (e.g. EQ bands into `S` / stores, BPM text still updated against the DOM in places).
+Current Svelte-driven areas:
 
-**UI subsystems still built or updated imperatively** (non-exhaustive): **FX strip** (`src/ui/fxStrip.ts` — DOM built from TS, slot updates), **knobs** (`src/input/knobs.ts`), **XY pad** (`src/input/xyPad.ts`), **color picker** (`src/ui/colorPicker.ts`), **controller learn** highlights and button copy (`src/input/controllerLearn.ts`), **EQ meter bar heights** and **beat flash** (`src/ui/statusAndEq.ts`), **BPM readout** (`src/audio/audioUiAdapter.ts`).
+- tabs
+- buttons (bang vs toggle)
+- preset bank
+- color system (swatches + picker UI)
+- FX strip UI
+- knobs (parameters + screen)
+- XY pad
+- live feedback (EQ, BPM, beat flash)
+- controller learn UI state
+- color picker visibility/state flow
 
-**Persistence:** `localStorage` keys `bazikjs_state` and `bazikjs_controller_bindings` (`src/persistence/storage.ts`, `src/input/controllerBindingsStorage.ts`). Boot behavior and restore scope are intentionally conservative (see `src/app/init.ts`).
+### 2.2 Imperative Core (by design)
 
-## Interaction grammar
+These parts remain imperative intentionally:
 
-The interface is organized around a small **interaction vocabulary** (instrument-like, not dashboard-like):
+- canvas render loop and draw path in `src/graphics`
+- audio capture/analysis pipeline in `src/audio`
+- pointer math inside interactive components (knob drag, XY drag, color wheel pick)
+- controller learn event capture (global click capture + key capture)
 
-| Kind | Meaning | Examples in this app |
-|------|---------|----------------------|
-| **Bang** | Momentary or fire-and-forget **action**; no lasting “on” state in the control itself | Shift, preset prev/next (as actions), save/clone, pars randomize, FX panel toggle hook, reset map |
-| **Toggle** | **Binary state**; UI reflects on/off | Microphone, color bank selection, FX arm per slot, controller learn mode |
-| **Continuous** | **Scalar** adjusted over a range; here many musical parameters use a **bipolar −100…+100** convention | Speed/explode knobs (mapped to `par1`/`par2`), screen blend, EQ gain sliders |
-| **XY** | **Two coupled axes** mapped into two parameters | XY pad → `par1` / `par2` (same pair as the speed/explode knobs in state) |
+These are low-level runtime/input systems where imperative control is appropriate.
 
-CSS groups reflect this (e.g. shared “bang/trigger” styling for a subset of buttons). **Shift** is special-cased in logic: on some presets it **cycles mode**; on others it **advances the preset** (`src/input/actions.ts` → `doShift()`).
+## 3. State Model
 
-## What is already Svelte-driven
+State architecture uses a bridge model:
 
-- **Top tabs** — `activeTopTab` store (`src/ui/stores/navStore.ts`)
-- **Preset selection** — `currentPreset` store + `PresetBank.svelte` / `PresetThumb.svelte`
-- **Color banks** — `activeColorBank` store + `ToggleButton` (cbank variant)
-- **Color swatches** — `colors` / `activeColor` stores + `ColorSwatches.svelte`
-- **Parameter value readouts** — `par1` / `par2` stores + `StepperField.svelte`
-- **Screen blend readout** — `fade` store + `StepperField`
-- **Break** — `isBreak` store drives pressed styling (`BangButton` + `pressed`)
-- **Mic** — `micActive` store + `ToggleButton` (mic variant)
-- **Status line text** — preset name, mode, par1/par2, EQ summary, beat, FPS bound from stores / derived state in `App.svelte`
-- **XY dot position** — derived from `par1` / `par2` in markup (pad **events** remain imperative)
+- `S` singleton (`src/core/state/singleton.ts`) is the canonical runtime object used by engine-level systems.
+- Svelte stores in `src/core/state/*Store.ts` mirror `S` for reactive UI.
+- `write*` functions are the mutation interface (`writePar`, `writeCurrentPreset`, `writeFxAt`, `writeFxArmed`, `writeColorAt`, etc.).
 
-Shared primitives: `src/ui/components/BangButton.svelte`, `ToggleButton.svelte`, `StepperField.svelte`.
+Philosophy:
 
-## What is still imperative
+- UI reads from stores.
+- Mutations go through `write*` functions.
+- `write*` keeps `S` and stores synchronized.
 
-- **Canvas preview** — frame loop, preset draw functions, context sizing (`src/graphics/`)
-- **Audio engine** — capture, analysis, feature bus (`src/audio/`)
-- **FX strip** — grid HTML, knob drag, slot DOM updates (`src/ui/fxStrip.ts`)
-- **Knobs** — drag math, indicator rotation (`src/input/knobs.ts`)
-- **XY pad** — pointer listeners (`src/input/xyPad.ts`)
-- **Color picker** — wheel canvas, popover placement, overlay (`src/ui/colorPicker.ts`)
-- **Controller learn** — capture flow, binding storage, highlight scanning (`src/input/controllerLearn.ts`)
-- **EQ VU meters** — bar `height` from `updateUI()` (`src/ui/statusAndEq.ts`)
-- **BPM display** — text on `#bpm-display` (`src/audio/audioUiAdapter.ts`)
-- **Beat flash** — `.on` class on `#beat-flash` (`src/ui/statusAndEq.ts`)
-- **Save button** — temporary “saved!” label in `saveState()` (`src/input/actions.ts`)
+## 4. Rendering Flow
 
-## Roadmap
+High-level runtime flow:
 
-**Phase 1 — done (initial migration):** Shell and listed controls moved to **Svelte + stores**; imperative DOM pruned for tabs, preset row, banks, steppers, break/mic, and status bindings.
+1. Audio input/analysis computes features.
+2. Features update state (`S` + stores).
+3. `requestAnimationFrame` loop builds render snapshot.
+4. Canvas preview renders from snapshot.
 
-**Phase 2 — next:** **FX strip** as Svelte components; arm/value state either lifted to stores or thinly wrapped so `updateFxSlot` stops owning the DOM.
+In short: **audio input → analysis → state updates → render loop → canvas preview**.
 
-**Phase 3:** **Knobs** and **XY pad** — Svelte-managed elements with the same math, or small dedicated components calling existing writers.
+## 5. FX System
 
-**Phase 4:** **Audio-linked visuals** — EQ meters, BPM, beat flash driven by stores updated from the audio path (remove remaining `getElementById` in those hot paths).
+FX layer is fixed to 8 slots (ordered metadata in `src/fx/builtinSlots.ts`):
 
-**Phase 5:** **Controller learn** — UI state (active target, selection) in stores; `data-controller-target` elements get `class:` from Svelte instead of global `querySelectorAll`.
+1. Edge
+2. BlurSat
+3. LightRay
+4. Zoom
+5. LoFi
+6. Echo
+7. Kaleido
+8. Split
 
-## Development philosophy
+Each slot has two independent dimensions:
 
-- Prefer **simple, explicit** wiring over abstraction layers that obscure behavior.
-- Avoid **over-engineering**: the singleton + store writers exist to bridge legacy imperative code and a growing Svelte surface without a big-bang rewrite.
-- Treat the UI as an **instrument**: density and muscle memory matter; interaction grammar is the main consistency tool.
-- **Visual consistency** should follow **roles** (bang / toggle / continuous / XY), not one-off styling.
+- **value**: bipolar intensity `-100..100`
+- **armed**: on/off boolean
+
+Important behavior:
+
+- Arming does not change value.
+- Value remains editable while unarmed.
+- UI for strip/slots is Svelte-driven (`FxStrip.svelte`, `FxSlot.svelte`).
+- The UI is Svelte-driven, while effect application happens outside the Svelte UI layer in the rendering pipeline.
+
+## 6. Controller Learn
+
+Controller learn uses `data-controller-target` on mappable UI controls and semantic bindings in input mapping.
+
+Behavior model:
+
+- learn mode on/off state is store-driven for UI
+- selected target and button label are store-driven
+- click/key capture remains imperative in `src/input/controllerLearn.ts` (intentional)
+
+This preserves deterministic input capture while keeping visuals reactive.
+
+## 7. Persistence
+
+Persistence uses `localStorage`:
+
+- app state key: `bazikjs_state`
+- controller bindings key: `bazikjs_controller_bindings`
+
+Current saved payload includes (via `src/persistence/storage.ts`):
+
+- schema version
+- preset index/id
+- mode
+- parameters (`par1`, `par2`, `speed`, `explode`; `par1`/`par2` are the generic internal parameter model, while `speed`/`explode` are the current preset parameter labels)
+- FX values (`fx`)
+- FX armed state (`fxArmed`)
+
+Schema compatibility is handled through version-aware restore helpers.
+
+## 8. Project Structure
+
+Main directories:
+
+- `src/app` — app shell and bootstrap
+- `src/ui` — Svelte components, UI stores, style layer
+- `src/input` — keyboard/controller routing + controller learn logic
+- `src/core/state` — singleton + stores + write functions
+- `src/audio` — Web Audio input + analysis + feature publishing
+- `src/graphics` — render loop + canvas draw pipeline
+- `src/presets` — preset registry/catalog/metadata
+- `src/persistence` — save/load + schema handling
+
+## 9. What is intentionally NOT refactored
+
+Still intentionally imperative:
+
+- canvas engine internals
+- audio analysis internals
+- low-level pointer math for interactive controls
+- controller event capture plumbing
+
+These are runtime/input concerns where direct imperative flow is preferred for control and predictability.
+
+## 10. Development Guidelines
+
+- Prefer Svelte components + stores for UI behavior.
+- Avoid adding new UI DOM mutation paths (`getElementById`, `querySelector`, manual class toggles) unless absolutely required for low-level runtime behavior.
+- Route state changes through `write*` functions.
+- Preserve existing interaction grammar and visual language (bang/toggle/knob paradigms).
