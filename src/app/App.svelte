@@ -32,6 +32,12 @@
   import { bpmFeedback } from '../ui/stores/liveFeedbackStore';
   import { controllerLearnButtonLabel, controllerLearnSelectedTargetId } from '../ui/stores/controllerLearnUiStore';
   import ColorPicker from '../ui/components/ColorPicker.svelte';
+  import {
+    outputFullscreen,
+    outputResolution,
+    outputScaling,
+    outputStatusText,
+  } from '../ui/stores/outputStore';
 
   onMount(() => void init());
 
@@ -59,6 +65,26 @@
   $: eqMeterBand = ['bass', 'bass', 'bass', 'mid', 'mid', 'mid', 'high', 'high', 'high'];
 
   const bankIndices = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+  const outputResolutionOptions = [
+    { value: 'auto', label: 'Auto' },
+    { value: '1280x720', label: '1280×720' },
+    { value: '1920x1080', label: '1920×1080' },
+    { value: '2560x1440', label: '2560×1440' },
+    { value: '3840x2160', label: '3840×2160' },
+  ] as const;
+  const outputScalingOptions = [
+    { value: 'fit', label: 'Fit' },
+    { value: 'fill', label: 'Fill' },
+    { value: 'stretch', label: 'Stretch' },
+  ] as const;
+
+  function onOutputResolutionChange(event: Event): void {
+    actions.setOutputResolution((event.currentTarget as HTMLSelectElement).value);
+  }
+
+  function onOutputScalingChange(event: Event): void {
+    actions.setOutputScaling((event.currentTarget as HTMLSelectElement).value);
+  }
 </script>
 
 <div id="app">
@@ -85,9 +111,9 @@
           <button
             type="button"
             class="tab"
-            class:active={$activeTopTab === 'options'}
-            id="tab-options"
-            on:click={() => actions.switchTab('options')}>options</button>
+            class:active={$activeTopTab === 'output'}
+            id="tab-output"
+            on:click={() => actions.switchTab('output')}>output</button>
         </div>
       </div>
       <div class="topbar-right">
@@ -105,6 +131,7 @@
       </div>
     </div>
 
+    {#if $activeTopTab !== 'output'}
     <div class="main-grid">
       <div class="left-panel">
         <div class="section">
@@ -311,6 +338,76 @@
         <div class="status-item" id="st-fps">fps <span>{$fps}</span></div>
       </div>
     </div>
+    {:else}
+    <div class="main-grid output-tab-grid">
+      <div class="left-panel output-side-placeholder"></div>
+      <div class="center-panel output-center-panel">
+        <div class="output-panel">
+          <div class="section output-section output-section-actions">
+            <div class="panel-label">output</div>
+            <div class="output-actions-row">
+              <BangButton clazz="right-btn output-action-btn" on:click={() => actions.openOutputWindow()}>
+                open output
+              </BangButton>
+              <BangButton clazz="right-btn output-action-btn" on:click={() => actions.closeOutputWindow()}>
+                close output
+              </BangButton>
+              <button
+                type="button"
+                class="output-toggle-btn"
+                class:active={$outputFullscreen}
+                on:click={() => void actions.toggleOutputFullscreen()}
+              >
+                fullscreen
+              </button>
+            </div>
+          </div>
+
+          <div class="output-lower-grid">
+          <div class="section output-section output-section-display">
+            <div class="panel-label">display</div>
+            <div class="output-select-grid">
+              <label class="output-select-label" for="output-resolution">resolution</label>
+              <select
+                id="output-resolution"
+                class="output-select"
+                value={$outputResolution}
+                on:change={onOutputResolutionChange}
+              >
+                {#each outputResolutionOptions as option}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
+
+              <label class="output-select-label" for="output-scaling">scaling</label>
+              <select
+                id="output-scaling"
+                class="output-select"
+                value={$outputScaling}
+                on:change={onOutputScalingChange}
+              >
+                {#each outputScalingOptions as option}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div class="section output-section output-section-status">
+            <div class="panel-label">status</div>
+            <div class="output-status-grid">
+              <div class="status-item">output <span>{$outputStatusText}</span></div>
+              <div class="status-item">fullscreen <span>{$outputFullscreen ? 'On' : 'Off'}</span></div>
+              <div class="status-item">resolution <span>{$outputResolution}</span></div>
+              <div class="status-item">scaling <span>{$outputScaling}</span></div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div class="right-panel output-side-placeholder"></div>
+    </div>
+    {/if}
 
     <ColorPicker />
   </div>

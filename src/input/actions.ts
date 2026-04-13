@@ -24,6 +24,18 @@ import { cvs } from '../graphics/context';
 import { activeTopTab, type TopTab } from '../ui/stores/navStore';
 import { fxPanelOpen } from '../ui/stores/fxPanelStore';
 import { saveStateToStorage } from '../persistence/storage';
+import { get } from 'svelte/store';
+import {
+  outputFullscreen,
+  type OutputResolution,
+  type OutputScaling,
+  writeOutputConnected,
+  writeOutputFullscreen,
+  writeOutputResolution,
+  writeOutputScaling,
+} from '../ui/stores/outputStore';
+
+let outputWindowRef: Window | null = null;
 
 export function switchTab(tab: TopTab): void {
   activeTopTab.set(tab);
@@ -164,6 +176,86 @@ export function exportFrame(): void {
 
 export function toggleFxPanel(): void {
   fxPanelOpen.update((open) => !open);
+}
+
+export function openOutputWindow(): void {
+  if (outputWindowRef && !outputWindowRef.closed) {
+    outputWindowRef.focus();
+    writeOutputConnected(true);
+    return;
+  }
+
+  const opened = window.open('', 'bazik-js-output', 'popup=yes,width=1280,height=720');
+  if (!opened) {
+    writeOutputConnected(false);
+    return;
+  }
+
+  outputWindowRef = opened;
+  writeOutputConnected(true);
+  opened.document.title = 'BAZIK JS OUTPUT';
+  opened.document.body.style.margin = '0';
+  opened.document.body.style.background = '#050210';
+  opened.document.body.style.color = '#CAD8D8';
+  opened.document.body.style.fontFamily = "'Inter', sans-serif";
+  if (!opened.document.body.innerHTML.trim()) {
+    opened.document.body.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:100vh;letter-spacing:0.08em;text-transform:uppercase;font-size:12px;">BAZIK JS OUTPUT</div>';
+  }
+  opened.addEventListener('beforeunload', () => {
+    if (outputWindowRef === opened) {
+      outputWindowRef = null;
+      writeOutputConnected(false);
+    }
+  });
+}
+
+export function closeOutputWindow(): void {
+  if (outputWindowRef && !outputWindowRef.closed) {
+    outputWindowRef.close();
+  }
+  outputWindowRef = null;
+  writeOutputConnected(false);
+}
+
+export async function toggleOutputFullscreen(): Promise<void> {
+  const next = !get(outputFullscreen);
+  writeOutputFullscreen(next);
+
+  if (!outputWindowRef || outputWindowRef.closed) {
+    return;
+  }
+
+  const doc = outputWindowRef.document;
+  if (next) {
+    try {
+      await doc.documentElement.requestFullscreen();
+    } catch {
+      writeOutputFullscreen(false);
+    }
+    return;
+  }
+
+  if (doc.fullscreenElement) {
+    try {
+      await doc.exitFullscreen();
+    } catch {
+      // Keep UI state as requested toggle even if browser blocks exit call.
+    }
+  }
+}
+
+export function setOutputResolution(value: string): void {
+  const next: OutputResolution =
+    value === '1280x720' || value === '1920x1080' || value === '2560x1440' || value === '3840x2160'
+      ? value
+      : 'auto';
+  writeOutputResolution(next);
+}
+
+export function setOutputScaling(value: string): void {
+  const next: OutputScaling = value === 'fill' || value === 'stretch' ? value : 'fit';
+  writeOutputScaling(next);
 }
 
 /** Used by input router/controller semantics. */
