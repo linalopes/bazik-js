@@ -22,17 +22,15 @@ import { toggleMic } from '../audio/analysis';
 import { resetControllerBindings } from './controllerLearn';
 import { cvs } from '../graphics/context';
 import { activeTopTab, type TopTab } from '../ui/stores/navStore';
+import { fxPanelOpen } from '../ui/stores/fxPanelStore';
 import { saveStateToStorage } from '../persistence/storage';
-import { updateKnob } from './knobs';
 
 export function refreshParDisplays(): void {
-  syncParLabels();
+  // Knob visuals are now Svelte-driven.
 }
 
 function syncParLabels(): void {
-  /* Knobs stay imperative until canvas/knob migration; labels + XY are Svelte-bound. */
-  updateKnob('speed', S.par1);
-  updateKnob('explode', S.par2);
+  // Kept for compatibility with existing call sites.
 }
 
 export function switchTab(tab: TopTab): void {
@@ -139,7 +137,12 @@ export function resetScreenBlend(): void {
 
 /** Knob drag, ± buttons, and external resets: keep indicator in sync (readout is Svelte-bound). */
 export function refreshScreenBlendUi(): void {
-  updateKnob('screen', S.fade);
+  // Screen knob visual is Svelte-driven.
+}
+
+/** Absolute set for the SCREEN knob drag path. */
+export function setScreenBlendValue(v: number): void {
+  writeFade(Math.max(-100, Math.min(100, Math.round(v))));
 }
 
 export function selectColorBank(i: number): void {
@@ -178,9 +181,7 @@ export function exportFrame(): void {
 }
 
 export function toggleFxPanel(): void {
-  const strip = document.getElementById('fx-strip');
-  if (!strip) return;
-  strip.style.display = strip.style.display === 'none' ? 'block' : 'block';
+  fxPanelOpen.update((open) => !open);
 }
 
 /** Used by hardware router: store + UI knob sync */

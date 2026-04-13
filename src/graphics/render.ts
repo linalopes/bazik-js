@@ -2,12 +2,11 @@ import { S, bumpFrame, bumpAutoTimer, incrementFpsCounter, writeFpsTriple, eqGai
 import { analyzeAudio } from '../audio/analysis';
 import { getRenderSnapshot } from './engine/renderSnapshot';
 import { renderFrame } from './engine/Renderer';
-import { updateUI, syncBeatFlashOverlay } from '../ui/statusAndEq';
 import { nextPreset, setMode, adjustPar } from '../input/actions';
 import { autoPilot } from '../automation/AutoPilot';
 
 /**
- * App tick: audio features → preview canvas placeholder → status line / meters → auto-pilot.
+ * App tick: audio features → preview canvas placeholder → auto-pilot.
  */
 export function render(): void {
   const audio = analyzeAudio({
@@ -18,9 +17,6 @@ export function render(): void {
 
   const snapshot = getRenderSnapshot();
   renderFrame(snapshot);
-
-  syncBeatFlashOverlay(S.banger === 1);
-  updateUI();
   bumpFrame();
 
   autoPilot.step(

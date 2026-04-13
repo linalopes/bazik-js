@@ -1,10 +1,11 @@
-import { S } from '../core/state';
+import { get } from 'svelte/store';
+import { S, fxArmed } from '../core/state';
 import { getManifestAt, getPresetIndexById } from '../presets/PresetManager';
 
 const KEY = 'bazikjs_state';
 const LEGACY_SCHEMA_VERSION = 1;
 /** Numeric `preset` index is written as direct bank position (e.g. bars-first: 0 = bars). */
-const CURRENT_SCHEMA_VERSION = 5;
+const CURRENT_SCHEMA_VERSION = 6;
 const PRESET_BANK_SIZE = 8;
 
 export interface SavedStatePayload {
@@ -17,6 +18,7 @@ export interface SavedStatePayload {
   speed?: number;
   explode?: number;
   fx?: number[];
+  fxArmed?: boolean[];
 }
 
 export function saveStateToStorage(): void {
@@ -30,6 +32,7 @@ export function saveStateToStorage(): void {
     speed: S.speed,
     explode: S.explode,
     fx: S.fx,
+    fxArmed: get(fxArmed),
   });
   localStorage.setItem(KEY, data);
 }

@@ -1,6 +1,5 @@
 import { initMainCanvas } from '../graphics/context';
 import { render } from '../graphics/render';
-import { buildFxStrip, updateFxSlot } from '../ui/fxStrip';
 import {
   selectPreset,
   selectColorBank,
@@ -9,15 +8,12 @@ import {
   setPar2Value,
   setSpeedValue,
   setExplodeValue,
-  refreshParDisplays,
-  refreshScreenBlendUi,
 } from '../input/actions';
-import { setupXYPad } from '../input/xyPad';
-import { makeKnob, updateKnob } from '../input/knobs';
 import { registerKeyboard } from '../input/keyboard';
 import { initializeControllerLearnMode } from '../input/controllerLearn';
 import { getSavedSchemaVersion, loadStateFromStorage } from '../persistence/storage';
-import { S, writeFxAt } from '../core/state';
+import { writeFxAt } from '../core/state';
+import { writeFxArmed } from '../core/state/fxStore';
 import { getPresetIndexById, initializePresetRegistry, refreshPresetList } from '../presets/list';
 
 export async function init(): Promise<void> {
@@ -27,30 +23,7 @@ export async function init(): Promise<void> {
 
   await initializePresetRegistry();
   refreshPresetList();
-  buildFxStrip();
   selectColorBank(0);
-  setupXYPad();
-
-  (['speed', 'explode'] as const).forEach((p) => {
-    const el = document.getElementById('knob-' + p);
-    if (!el) return;
-    const ind = document.createElement('div');
-    ind.className = 'knob-indicator';
-    ind.id = 'ind-' + p;
-    el.appendChild(ind);
-    makeKnob('knob-' + p, p, refreshParDisplays);
-    updateKnob(p, S[p]);
-  });
-
-  const screenKnob = document.getElementById('knob-screen');
-  if (screenKnob) {
-    const indS = document.createElement('div');
-    indS.className = 'knob-indicator';
-    indS.id = 'ind-screen';
-    screenKnob.appendChild(indS);
-    makeKnob('knob-screen', 'screen', refreshScreenBlendUi);
-    updateKnob('screen', S.fade);
-  }
 
   const saved = loadStateFromStorage();
   if (saved) {
@@ -64,8 +37,10 @@ export async function init(): Promise<void> {
     if (typeof saved.explode === 'number') setExplodeValue(saved.explode);
     if (saved.fx) saved.fx.forEach((v, i) => {
       writeFxAt(i, v!);
-      updateFxSlot(i);
     });
+    if (Array.isArray(saved.fxArmed)) {
+      writeFxArmed(saved.fxArmed);
+    }
   }
 
   const barsIdx = getPresetIndexById('bars');

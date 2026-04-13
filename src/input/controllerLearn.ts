@@ -8,9 +8,9 @@ import {
   type SemanticId,
 } from './ShortcutMap';
 import { clearControllerBindings, loadControllerBindings, saveControllerBindings } from './controllerBindingsStorage';
+import { controllerLearnButtonLabel, controllerLearnSelectedTargetId } from '../ui/stores/controllerLearnUiStore';
 
 let learnTarget: SemanticId | null = null;
-let selectedTargetEl: HTMLElement | null = null;
 
 const TARGET_TO_SEMANTIC: Record<string, SemanticId> = {
   'shift': 'transport.shift',
@@ -44,36 +44,17 @@ function semanticLabel(s: string): string {
   return s.replace(/\./g, ' ');
 }
 
-function setLearnUi(active: boolean, target?: SemanticId): void {
-  const btn = document.getElementById('controller-learn-btn');
-  if (!btn) return;
-  btn.classList.toggle('active', active);
-  btn.textContent = active && target ? `listening: ${semanticLabel(target)}` : 'controller learn';
-}
-
-function refreshLearnHighlights(): void {
-  const all = document.querySelectorAll<HTMLElement>('[data-controller-target]');
-  all.forEach((el) => {
-    el.classList.toggle('controller-learn-target', S.controllerLearn);
-    const isSel = selectedTargetEl === el;
-    el.classList.toggle('controller-learn-selected', isSel);
-  });
-}
-
 export function beginControllerLearn(target: SemanticId): void {
   learnTarget = target;
   writeControllerLearn(true);
-  setLearnUi(true, target);
-  refreshLearnHighlights();
+  controllerLearnButtonLabel.set(`listening: ${semanticLabel(target)}`);
 }
 
 export function cancelControllerLearn(): void {
   learnTarget = null;
-  if (selectedTargetEl) selectedTargetEl.classList.remove('controller-learn-selected');
-  selectedTargetEl = null;
+  controllerLearnSelectedTargetId.set(null);
   writeControllerLearn(false);
-  setLearnUi(false);
-  refreshLearnHighlights();
+  controllerLearnButtonLabel.set('controller learn');
 }
 
 export function toggleControllerLearn(): void {
@@ -82,8 +63,7 @@ export function toggleControllerLearn(): void {
     return;
   }
   writeControllerLearn(true);
-  setLearnUi(true);
-  refreshLearnHighlights();
+  controllerLearnButtonLabel.set('controller learn');
 }
 
 function onLearnTargetClickCapture(e: Event): void {
@@ -97,10 +77,8 @@ function onLearnTargetClickCapture(e: Event): void {
   const targetId = hit.dataset.controllerTarget ?? '';
   const semantic = TARGET_TO_SEMANTIC[targetId];
   if (!semantic) return;
-  if (selectedTargetEl) selectedTargetEl.classList.remove('controller-learn-selected');
-  selectedTargetEl = hit;
+  controllerLearnSelectedTargetId.set(targetId);
   beginControllerLearn(semantic);
-  refreshLearnHighlights();
 }
 
 /** Called from KeyboardInput before regular routing; consumes the key when learning. */
@@ -111,15 +89,12 @@ export function captureControllerLearnKey(e: KeyboardEvent): boolean {
   if (!key) return false;
   bindPhysicalKeyToSemantic(key, learnTarget);
   saveControllerBindings(getCurrentBindings());
-  const btn = document.getElementById('controller-learn-btn');
-  if (btn) btn.textContent = `mapped ${key} -> ${semanticLabel(learnTarget)}`;
-  if (selectedTargetEl) selectedTargetEl.classList.remove('controller-learn-selected');
-  selectedTargetEl = null;
+  controllerLearnButtonLabel.set(`mapped ${key} -> ${semanticLabel(learnTarget)}`);
+  controllerLearnSelectedTargetId.set(null);
   learnTarget = null;
   window.setTimeout(() => {
     if (S.controllerLearn) {
-      setLearnUi(true);
-      refreshLearnHighlights();
+      controllerLearnButtonLabel.set('controller learn');
     }
   }, 900);
   return true;
@@ -133,18 +108,16 @@ export function initializeControllerLearnMode(): void {
   const saved = loadControllerBindings();
   if (saved) replaceAllBindings(saved);
   document.addEventListener('click', onLearnTargetClickCapture, true);
-  refreshLearnHighlights();
+  controllerLearnButtonLabel.set('controller learn');
+  controllerLearnSelectedTargetId.set(null);
 }
 
 export function resetControllerBindings(): void {
   resetBindingsToDefaults();
   clearControllerBindings();
   cancelControllerLearn();
-  const btn = document.getElementById('controller-learn-btn');
-  if (btn) {
-    btn.textContent = 'bindings reset';
-    window.setTimeout(() => {
-      btn.textContent = 'controller learn';
-    }, 1000);
-  }
+  controllerLearnButtonLabel.set('bindings reset');
+  window.setTimeout(() => {
+    controllerLearnButtonLabel.set('controller learn');
+  }, 1000);
 }

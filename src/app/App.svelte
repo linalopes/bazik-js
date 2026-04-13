@@ -3,7 +3,6 @@
   import { onMount } from 'svelte';
   import { init } from './init';
   import * as actions from '../input/actions';
-  import { closeColorPicker, cpLightnessChange, cpHexChange } from '../ui/colorPicker';
   import { activeTopTab } from '../ui/stores/navStore';
   import {
     currentPreset,
@@ -17,22 +16,47 @@
     banger,
     fps,
     eq,
+    controllerLearn,
+    writePar,
+    writeXy,
   } from '../core/state';
   import { PRESETS } from '../presets/list';
   import BangButton from '../ui/components/BangButton.svelte';
   import ToggleButton from '../ui/components/ToggleButton.svelte';
   import StepperField from '../ui/components/StepperField.svelte';
+  import Knob from '../ui/components/Knob.svelte';
   import PresetBank from '../ui/components/PresetBank.svelte';
   import ColorSwatches from '../ui/components/ColorSwatches.svelte';
+  import FxStrip from '../ui/components/FxStrip.svelte';
+  import XyPad from '../ui/components/XyPad.svelte';
+  import { bpmFeedback } from '../ui/stores/liveFeedbackStore';
+  import { controllerLearnButtonLabel, controllerLearnSelectedTargetId } from '../ui/stores/controllerLearnUiStore';
+  import ColorPicker from '../ui/components/ColorPicker.svelte';
 
   onMount(() => void init());
 
   $: presetLabel = PRESETS[$currentPreset]?.name ?? '—';
   $: modeLabel = 'mode ' + $currentMode;
-  $: xyLeftPct = (($par1 + 100) / 200) * 100;
-  $: xyTopPct = (1 - ($par2 + 100) / 200) * 100;
   $: micLabel = $micActive ? 'mic on' : 'mic off';
   $: eqStatusText = $eq[0].toFixed(2) + ' / ' + $eq[1].toFixed(2) + ' / ' + $eq[2].toFixed(2);
+  $: bpmText =
+    $bpmFeedback.value === null
+      ? '-- BPM'
+      : ($bpmFeedback.isApprox
+        ? '~ ' + Math.round($bpmFeedback.value) + ' BPM'
+        : ($bpmFeedback.beatPulse ? '♦ ' : '') + Math.round($bpmFeedback.value) + ' BPM');
+  $: eqMeterHeights = [
+    Math.max(2, $eq[0] * 92),
+    Math.max(2, $eq[0] * 78),
+    Math.max(2, $eq[0] * 88),
+    Math.max(2, $eq[1] * 82),
+    Math.max(2, $eq[1] * 92),
+    Math.max(2, $eq[1] * 70),
+    Math.max(2, $eq[2] * 65),
+    Math.max(2, $eq[2] * 55),
+    Math.max(2, $eq[2] * 60),
+  ];
+  $: eqMeterBand = ['bass', 'bass', 'bass', 'mid', 'mid', 'mid', 'high', 'high', 'high'];
 
   const bankIndices = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 </script>
@@ -67,7 +91,9 @@
         </div>
       </div>
       <div class="topbar-right">
-        <div class="bpm-display" id="bpm-display">-- BPM</div>
+        <div class="bpm-display" id="bpm-display" class:beat={!$bpmFeedback.isApprox && $bpmFeedback.beatPulse === 1}>
+          {bpmText}
+        </div>
         <ToggleButton
           variant="mic"
           active={$micActive}
@@ -84,7 +110,15 @@
         <div class="section">
           <div class="panel-label">controller</div>
           <div class="controller-row">
-          <button type="button" class="controller-btn" id="controller-learn-btn" on:click={() => actions.toggleControllerLearn()}>controller learn</button>
+          <button
+            type="button"
+            class="controller-btn"
+            class:active={$controllerLearn}
+            id="controller-learn-btn"
+            on:click={() => actions.toggleControllerLearn()}
+          >
+            {$controllerLearnButtonLabel}
+          </button>
           <BangButton clazz="controller-btn reset" on:click={() => actions.resetControllerMappings()}>reset map</BangButton>
           </div>
         </div>
@@ -106,25 +140,24 @@
             </div>
           </div>
           <div class="eq-meter-row">
-            <div class="eq-meter-bar bass" id="eq0"></div>
-            <div class="eq-meter-bar bass" id="eq1"></div>
-            <div class="eq-meter-bar bass" id="eq2"></div>
-            <div class="eq-meter-bar mid" id="eq3"></div>
-            <div class="eq-meter-bar mid" id="eq4"></div>
-            <div class="eq-meter-bar mid" id="eq5"></div>
-            <div class="eq-meter-bar high" id="eq6"></div>
-            <div class="eq-meter-bar high" id="eq7"></div>
-            <div class="eq-meter-bar high" id="eq8"></div>
+            {#each eqMeterHeights as h, i (i)}
+              <div class="eq-meter-bar {eqMeterBand[i]}" id={"eq" + i} style:height={h + '%'}></div>
+            {/each}
           </div>
         </div>
 
         <div class="section">
           <div class="panel-label">screen</div>
           <div class="screen-blend-col">
-            <div class="knob-wrap">
-              <div class="knob" id="knob-screen" data-param="screen" data-val="0"></div>
-              <span class="knob-label">blend</span>
-            </div>
+            <Knob
+              id="knob-screen"
+              dataParam="screen"
+              label="blend"
+              value={$fade}
+              min={-100}
+              max={100}
+              onChange={(v) => actions.setScreenBlendValue(v)}
+            />
             <StepperField
               value={String($fade)}
               wrapperClass="screen-blend-stepper"
@@ -157,20 +190,40 @@
             <span class="preview-badge" id="preset-badge">{presetLabel}</span>
             <span class="preview-badge pink" id="mode-badge">{modeLabel}</span>
           </div>
-          <div class="beat-flash" id="beat-flash"></div>
+          <div class="beat-flash" id="beat-flash" class:on={$banger === 1}></div>
         </div>
         <div class="preview-transport">
           <div class="transport-row">
-            <BangButton clazz="transport-btn shift-btn" data-controller-target="shift" on:click={() => actions.doShift()}>shift</BangButton>
+            <BangButton
+              clazz="transport-btn shift-btn"
+              data-controller-target="shift"
+              learnTarget={$controllerLearn}
+              learnSelected={$controllerLearnSelectedTargetId === 'shift'}
+              on:click={() => actions.doShift()}
+            >shift</BangButton>
             <div class="nav-arrows">
-              <BangButton clazz="arrow-btn" data-controller-target="preset.prev" on:click={() => actions.prevPreset()}>◀</BangButton>
-              <BangButton clazz="arrow-btn" data-controller-target="preset.next" on:click={() => actions.nextPreset()}>▶</BangButton>
+              <BangButton
+                clazz="arrow-btn"
+                data-controller-target="preset.prev"
+                learnTarget={$controllerLearn}
+                learnSelected={$controllerLearnSelectedTargetId === 'preset.prev'}
+                on:click={() => actions.prevPreset()}
+              >◀</BangButton>
+              <BangButton
+                clazz="arrow-btn"
+                data-controller-target="preset.next"
+                learnTarget={$controllerLearn}
+                learnSelected={$controllerLearnSelectedTargetId === 'preset.next'}
+                on:click={() => actions.nextPreset()}
+              >▶</BangButton>
             </div>
             <BangButton
               clazz="transport-btn break-btn"
               id="break-center"
               data-controller-target="break"
               pressed={$isBreak}
+              learnTarget={$controllerLearn}
+              learnSelected={$controllerLearnSelectedTargetId === 'break'}
               on:mousedown={() => actions.startBreak()}
               on:mouseup={() => actions.endBreak()}
             >break</BangButton>
@@ -183,10 +236,15 @@
           <div class="panel-label">parameters</div>
           <div class="param-knob-par-grid">
             <div class="param-column">
-              <div class="knob-wrap">
-                <div class="knob" id="knob-speed" data-param="speed" data-val="0"></div>
-                <span class="knob-label">speed</span>
-              </div>
+              <Knob
+                id="knob-speed"
+                dataParam="speed"
+                label="speed"
+                value={$par1}
+                min={-100}
+                max={100}
+                onChange={(v) => actions.setSpeedValue(v)}
+              />
               <StepperField
                 value={String($par1)}
                 onMinus={() => actions.adjustPar('par1', -5)}
@@ -194,10 +252,15 @@
               />
             </div>
             <div class="param-column">
-              <div class="knob-wrap">
-                <div class="knob" id="knob-explode" data-param="explode" data-val="0"></div>
-                <span class="knob-label">explode</span>
-              </div>
+              <Knob
+                id="knob-explode"
+                dataParam="explode"
+                label="explode"
+                value={$par2}
+                min={-100}
+                max={100}
+                onChange={(v) => actions.setExplodeValue(v)}
+              />
               <StepperField
                 value={String($par2)}
                 onMinus={() => actions.adjustPar('par2', -5)}
@@ -209,16 +272,20 @@
 
         <div class="xy-pad-section section">
           <div class="panel-label">xy control</div>
-          <div class="xy-pad" id="xy-pad">
-            <div class="xy-grid-h"></div>
-            <div class="xy-grid-v"></div>
-            <div
-              class="xy-dot"
-              id="xy-dot"
-              style:left="{xyLeftPct}%"
-              style:top="{xyTopPct}%"
-            ></div>
-          </div>
+          <XyPad
+            valueX={$par1}
+            valueY={$par2}
+            min={-100}
+            max={100}
+            onChangeX={(next) => {
+              writePar('par1', next);
+              writeXy({ x: (next + 100) / 200, y: 1 - ($par2 + 100) / 200 });
+            }}
+            onChangeY={(next) => {
+              writePar('par2', next);
+              writeXy({ x: ($par1 + 100) / 200, y: 1 - (next + 100) / 200 });
+            }}
+          />
         </div>
 
         <div class="right-bottom-row">
@@ -232,9 +299,7 @@
     <div class="lower-band">
       <PresetBank />
 
-      <div class="fx-strip" id="fx-strip">
-        <div class="fx-grid" id="fx-grid"></div>
-      </div>
+      <FxStrip />
 
       <div class="status-bar">
         <div class="status-item">preset <span id="st-preset">{presetLabel}</span></div>
@@ -247,23 +312,7 @@
       </div>
     </div>
 
-    <div class="cp-overlay" id="cp-overlay" role="presentation" on:click={() => closeColorPicker()}></div>
-    <div class="cp-popover" id="cp-popover" style="display:none">
-      <div class="cp-wheel-wrap">
-        <canvas id="cp-wheel" width="160" height="160"></canvas>
-        <div class="cp-wheel-cursor" id="cp-cursor" style="left:80px;top:80px"></div>
-      </div>
-      <div class="cp-lightness-row">
-        <span class="cp-l-label">L</span>
-        <input type="range" class="cp-l-slider" id="cp-l-slider" min="0" max="100" value="50" on:input={(e) => cpLightnessChange(e.currentTarget.value)} />
-      </div>
-      <div class="cp-hex-row">
-        <span class="cp-hash">#</span>
-        <input type="text" class="cp-hex-input" id="cp-hex" maxlength="6" value="CAD8D8" on:input={(e) => cpHexChange(e.currentTarget.value)} />
-      </div>
-      <div class="cp-preview" id="cp-preview"></div>
-      <button type="button" class="cp-close" on:click={() => closeColorPicker()}>done</button>
-    </div>
+    <ColorPicker />
   </div>
   </div>
 
