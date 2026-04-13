@@ -166,17 +166,17 @@ export function toggleFxPanel(): void {
   fxPanelOpen.update((open) => !open);
 }
 
-/** Used by hardware router: store + UI knob sync */
+/** Used by input router/controller semantics. */
 export function applySpeedDelta(delta: number): void {
   adjustSpeed(delta);
 }
 
-/** Used by hardware router */
+/** Used by input router/controller semantics. */
 export function applyExplodeDelta(delta: number): void {
   adjustExplode(delta);
 }
 
-/** Absolute set (e.g. future hardware controller integration). */
+/** Absolute set from UI/component or external controller semantics. */
 export function setSpeedValue(v: number): void {
   writeSpeed(v);
 }
@@ -185,11 +185,22 @@ export function setExplodeValue(v: number): void {
   writeExplode(v);
 }
 
-/** Absolute par; keeps XY dot + labels in sync. */
+/** Absolute generic primary parameter (`par1`). */
 export function setPar1Value(v: number): void {
   writePar('par1', Math.max(-100, Math.min(100, Math.round(v))));
 }
 
+/** Absolute generic secondary parameter (`par2`). */
 export function setPar2Value(v: number): void {
   writePar('par2', Math.max(-100, Math.min(100, Math.round(v))));
+}
+
+/** Non-breaking alias for clearer semantics at UI call sites (`par1`). */
+export function setPrimaryParamValue(v: number): void {
+  setPar1Value(v);
+}
+
+/** Non-breaking alias for clearer semantics at UI call sites (`par2`). */
+export function setSecondaryParamValue(v: number): void {
+  setPar2Value(v);
 }

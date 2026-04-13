@@ -2,6 +2,12 @@
 
 Repository / npm package name: `bazik-js`.
 
+Naming conventions used in this repository:
+- product name: **BAZIK JS**
+- original reference: **Bazik**
+- package/repo slug: `bazik-js`
+- persisted localStorage keys: `bazikjs_*`
+
 ## 1. Project Overview
 
 BAZIK JS is a browser-based audiovisual instrument and a homage to the original Bazik.
@@ -50,6 +56,8 @@ Philosophy:
 - UI reads from stores.
 - Mutations go through `write*` functions.
 - `write*` keeps `S` and stores synchronized.
+- `par1`/`par2` are the generic internal parameter model; `speed`/`explode` are current preset-facing labels mapped onto that same model.
+- `fade` remains the compatibility field name for the bipolar screen blend control.
 
 ## 4. Rendering Flow
 

@@ -243,7 +243,7 @@
                 value={$par1}
                 min={-100}
                 max={100}
-                onChange={(v) => actions.setSpeedValue(v)}
+                onChange={(v) => actions.setPrimaryParamValue(v)}
               />
               <StepperField
                 value={String($par1)}
@@ -259,7 +259,7 @@
                 value={$par2}
                 min={-100}
                 max={100}
-                onChange={(v) => actions.setExplodeValue(v)}
+                onChange={(v) => actions.setSecondaryParamValue(v)}
               />
               <StepperField
                 value={String($par2)}

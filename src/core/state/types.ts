@@ -4,15 +4,19 @@ export interface AppState {
   micActive: boolean;
   currentPreset: number;
   currentMode: number;
+  /** Generic primary parameter model (UI label currently "speed"). */
   par1: number;
+  /** Generic secondary parameter model (UI label currently "explode"). */
   par2: number;
+  /** Current preset-facing label for `par1`; mirrored with `par1` by write functions. */
   speed: number;
+  /** Current preset-facing label for `par2`; mirrored with `par2` by write functions. */
   explode: number;
   fx: number[];
   eq: [number, number, number];
   banger: number;
   isBreak: boolean;
-  /** Preview screen blend: −100 full black, 0 normal, +100 full white washout. */
+  /** Bipolar screen blend control: −100 full black, 0 neutral, +100 full white washout. */
   fade: number;
   frame: number;
   xy: { x: number; y: number };

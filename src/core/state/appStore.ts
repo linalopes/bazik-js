@@ -38,6 +38,7 @@ export function writeMicActive(v: boolean): void {
 
 export function writePar(k: ParKey, v: number): void {
   const c = clampBipolarKnob(v);
+  // `par1`/`par2` are generic internals; `speed`/`explode` are current UI labels.
   if (k === 'par1') {
     S.par1 = c;
     par1.set(c);
@@ -90,6 +91,7 @@ export function writeIsBreak(v: boolean): void {
 }
 
 export function writeFade(v: number): void {
+  // Stored as `fade` for compatibility; semantically this is the bipolar screen blend control.
   const c = Math.max(-100, Math.min(100, Math.round(v)));
   S.fade = c;
   fade.set(c);
